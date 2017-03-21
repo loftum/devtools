@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
@@ -39,7 +38,7 @@ namespace Pat.Models
             {
                 request.ClientCertificates.Add(new X509Certificate2(File.ReadAllBytes(CertFile), CertPass));
             }
-
+            
             request.AllowAutoRedirect = AllowAutoRedirect;
             foreach (var header in Headers)
             {

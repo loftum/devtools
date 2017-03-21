@@ -2,7 +2,6 @@
 using System.Net;
 using System.Windows.Input;
 using Pat.IO;
-using Pat.Mapping;
 using Pat.Models;
 
 namespace Pat.ViewModels
@@ -13,8 +12,8 @@ namespace Pat.ViewModels
         private bool _isNotBusy;
         public IGlobalSettings GlobalSettings { get; }
         public IInput Inputs { get; }
-        public IRequest Request { get; set; }
-        public IResponse Response { get; }
+        public Request Request { get; set; }
+        public Response Response { get; }
         public ResponseContent ResponseContent { get; }
         public CookieVewModel Cookies { get; }
         public ICommand Execute { get; }

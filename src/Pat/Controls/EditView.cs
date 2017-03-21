@@ -107,6 +107,8 @@ namespace Pat.Controls
                 combobox.SetBinding(Selector.SelectedValueProperty, binding);
                 return combobox;
             }
+            var pwBox = new PasswordBox();
+            
 
             var textBox = new TextBox();
             textBox.SetBinding(TextBox.TextProperty, binding);

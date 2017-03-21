@@ -29,16 +29,22 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Expander Grid.Row="0" Header="Inputs" IsExpanded="True">
-                    <controls:EditView DataContext="{Binding Path=Inputs}" BorderThickness="0" />
-                </Expander>
-
-                <Expander Grid.Row="1" Header="Global settings">
-                    <controls:EditView DataContext="{Binding Path=GlobalSettings}" BorderThickness="0"/>
-                </Expander>
-                <Grid Grid.Row="2">
+                <TreeView Grid.Row="0">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="{x:Type TreeViewItem}">
+                            <Setter Property="IsExpanded" Value="True"/>
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                    <TreeViewItem Header="Inputs">
+                        <controls:EditView DataContext="{Binding Path=Inputs}" BorderThickness="0" />
+                    </TreeViewItem>
+                    <TreeViewItem Header="Global settings">
+                        <controls:EditView DataContext="{Binding Path=GlobalSettings}" BorderThickness="0"/>
+                    </TreeViewItem>
+                </TreeView>
+                
+                <Grid Grid.Row="1">
                     <Button Grid.Column="0" Command="{Binding Path=Execute}" IsEnabled="{Binding Path=IsNotBusy}">Go!</Button>
                 </Grid>
             </Grid>
