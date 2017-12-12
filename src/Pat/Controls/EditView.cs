@@ -107,11 +107,16 @@ namespace Pat.Controls
                 combobox.SetBinding(Selector.SelectedValueProperty, binding);
                 return combobox;
             }
-            var pwBox = new PasswordBox();
             
-
             var textBox = new TextBox();
             textBox.SetBinding(TextBox.TextProperty, binding);
+            if (scalar.Name == "Body")
+            {
+                textBox.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto;
+                textBox.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+                textBox.AcceptsReturn = true;
+                textBox.AcceptsTab = true;
+            }
             return textBox;
         }
     }
