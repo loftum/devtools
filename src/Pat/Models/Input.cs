@@ -13,6 +13,7 @@ namespace Pat.Models
         string CertPass { get; set; }
         bool AllowAutoRedirect { get; set; }
         ObservableCollection<KeyValue<string, string>> Headers { get; set; }
+        string Body { get; set; }
         HttpWebRequest CreateRequest();
     }
 
@@ -23,6 +24,7 @@ namespace Pat.Models
         public string CertFile { get; set; }
         public string CertPass { get; set; }
         public bool AllowAutoRedirect { get; set; }
+        public string Body { get; set; }
         public ObservableCollection<KeyValue<string, string>> Headers { get; set; }
         
         public Input()
@@ -54,9 +56,28 @@ namespace Pat.Models
                     case "content-type":
                         request.ContentType = header.Value;
                         break;
+                    case "referer":
+                        request.Referer = header.Value;
+                        break;
+                    case "connection":
+                        request.Connection = header.Value;
+                        break;
+                    case "expect":
+                        request.Expect = header.Value;
+                        break;
                     default:
                         request.Headers[header.Key] = header.Value;
                         break;
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(Body))
+            {
+                using (var stream = request.GetRequestStream())
+                {
+                    using (var writer = new StreamWriter(stream))
+                    {
+                        writer.Write(Body);
+                    }
                 }
             }
             return request;

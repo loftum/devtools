@@ -28,6 +28,7 @@
             <Grid Grid.Row="0" Name="SettingsGrid">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TreeView Grid.Row="0">
@@ -43,8 +44,20 @@
                         <controls:EditView DataContext="{Binding Path=GlobalSettings}" BorderThickness="0"/>
                     </TreeViewItem>
                 </TreeView>
-                
                 <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0">Body</Label>
+                    <TextBox Grid.Row="1" Text="{Binding Path=Inputs.Body}" 
+                             HorizontalScrollBarVisibility="Auto"
+                             VerticalScrollBarVisibility="Auto"
+                             FontFamily="Courier New"
+                             IsReadOnly="False"
+                             />
+                </Grid>
+                <Grid Grid.Row="2">
                     <Button Grid.Column="0" Command="{Binding Path=Execute}" IsEnabled="{Binding Path=IsNotBusy}">Go!</Button>
                 </Grid>
             </Grid>
