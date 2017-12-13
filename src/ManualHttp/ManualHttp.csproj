@@ -50,6 +50,7 @@
     <Compile Include="Core\HttpProtocol.cs" />
     <Compile Include="Core\HttpRequest.cs" />
     <Compile Include="Core\HttpResponse.cs" />
+    <Compile Include="Core\Transport.cs" />
     <Compile Include="Extensions\HeaderExtensions.cs" />
     <Compile Include="Extensions\StreamExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />

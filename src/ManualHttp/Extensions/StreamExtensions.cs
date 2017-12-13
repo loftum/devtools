@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Net;
+using System.Linq;
 using System.Text;
 using ManualHttp.Core;
 
@@ -15,7 +16,13 @@ namespace ManualHttp.Extensions
 
         public static void WriteRequestMessage(this Stream stream, HttpRequestMessage message, Encoding encoding)
         {
-            var bytes = encoding.GetBytes(message.ToString());
+            stream.WriteText(message.ToString(), encoding);
+        }
+
+        public static void WriteText(this Stream stream, string message, Encoding encoding)
+        {
+            var bytes = encoding.GetBytes(message);
+            Console.WriteLine($"Writing {bytes.Length} bytes");
             stream.Write(bytes, 0, bytes.Length);
             stream.Flush();
         }
@@ -58,7 +65,7 @@ namespace ManualHttp.Extensions
             {
                 HttpVersion = parts.Get(0),
                 StatusCode = parts.Get(1),
-                ReasonPhrase = parts.Get(2)
+                ReasonPhrase = string.Join(" ", parts.Skip(2))
             };
         }
 
