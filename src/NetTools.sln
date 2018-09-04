@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Http", "Http\Http.csproj", "{0FE98E52-27F3-4B7D-80AD-32BCB17C0C13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Http", "Http\Http.csproj", "{0FE98E52-27F3-4B7D-80AD-32BCB17C0C13}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pat", "Pat\Pat.csproj", "{065B0F1D-09AE-4B48-9BD8-8E96D89253E0}"
 EndProject
@@ -11,15 +11,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "20. Console", "20. Console"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "10. Desktop", "10. Desktop", "{EDA1EBC1-B493-4CAA-B9EF-2A6AB185C2F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcPing", "TcPing\TcPing.csproj", "{717121B7-324D-4DE9-A87A-908B489D0360}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TcPing", "TcPing\TcPing.csproj", "{717121B7-324D-4DE9-A87A-908B489D0360}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManualHttp", "ManualHttp\ManualHttp.csproj", "{F204D52F-C3B7-4CD7-BB4C-1006C46FD44D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManualHttp", "ManualHttp\ManualHttp.csproj", "{F204D52F-C3B7-4CD7-BB4C-1006C46FD44D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "30. Test tools", "30. Test tools", "{731947EC-7E5A-4C4B-B80F-4A467D172412}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketServer", "SocketServer\SocketServer.csproj", "{C0C84CB0-E2F7-4662-A063-FAE80412B6C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketServer", "SocketServer\SocketServer.csproj", "{C0C84CB0-E2F7-4662-A063-FAE80412B6C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketClient", "SocketClient\SocketClient.csproj", "{098E86E5-7B56-4141-98C3-96AB43B4461B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketClient", "SocketClient\SocketClient.csproj", "{098E86E5-7B56-4141-98C3-96AB43B4461B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

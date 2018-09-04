@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Linq;
 
 namespace Http.Commands
@@ -36,20 +36,21 @@ namespace Http.Commands
 
         private object Parse(Argument argument)
         {
-            if (Type == typeof(string))
+            switch (Type)
             {
-                return argument.Value;
+                case Type t when t == typeof(string):
+                    return argument.Value;
+                case Type t when t == typeof(bool):
+                    if (argument.Value == null)
+                    {
+                        return argument.IsNamed;
+                    }
+                    return bool.TryParse(argument.Value, out var ret) && ret;
+                case Type t when t.IsEnum:
+                    return Enum.Parse(Type, argument.Value, true);
+                default:
+                    return Convert.ChangeType(argument.Value, Type);
             }
-            if (Type == typeof(bool))
-            {
-                if (argument.Value == null)
-                {
-                    return argument.IsNamed;
-                }
-                bool ret;
-                return bool.TryParse(argument.Value, out ret) && ret;
-            }
-            return Convert.ChangeType(argument.Value, Type);
         }
 
         public override string ToString()

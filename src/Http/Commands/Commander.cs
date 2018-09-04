@@ -31,8 +31,7 @@ namespace Http.Commands
                 return PrintUsage;
             }
             var name = args[0].ToLowerInvariant();
-            Command command;
-            if (Commands.TryGetValue(name, out command))
+            if (Commands.TryGetValue(name, out var command))
             {
                 return () => command.Execute(args.Skip(1));
             }

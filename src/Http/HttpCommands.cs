@@ -1,43 +1,56 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
+﻿using Http.Logging;
 
 namespace Http
 {
     public class HttpCommands
     {
-        public static void Get(string url, string certFile = null, string certPass = null)
+        private static readonly ILogger Logger = Log.For<HttpCommands>();
+
+        public static void LogLevel(LogLevel level)
         {
-            var request = WebRequest.CreateHttp(url);
-            if (certFile != null)
-            {
-                request.ClientCertificates.Add(GetCert(certFile, certPass));
-            }
-            using (var response = request.GetResponse())
-            {
-                using (var stream = response.GetResponseStream())
-                {
-                    if (stream == null)
-                    {
-                        return;
-                    }
-                    using (var reader = new StreamReader(stream))
-                    {
-                        var read = reader.ReadToEnd();
-                        Console.WriteLine(read);
-                    }
-                }
-            }
+            Settings.Instance.LogLevel = level;
         }
 
-        private static X509Certificate2 GetCert(string certFile, string certPass)
+        public static void Get(string url, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
         {
-            if (!File.Exists(certFile))
+            Send("GET", url, accept, username, password, certFile, certPass);
+        }
+
+        public static void Send(string method, string url, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
+        {
+            var request = WebRequester.Create(method, url);
+            if (username != null || password != null)
             {
-                throw new ArgumentException($"Certificate file {certFile} does not exist", nameof(certFile));
+                request.Headers["Authorization"] = Authorization.Basic(username, password);
             }
-            return new X509Certificate2(File.ReadAllBytes(certFile), certPass);
+            if (certFile != null)
+            {
+                request = request.WithCert(certFile, certPass);
+            }
+
+            if (request.Headers.Count > 0)
+            {
+                Logger.Debug("Request headers:");
+                foreach (var key in request.Headers.AllKeys)
+                {
+                    Logger.Debug($"{key}: {request.Headers[key]}");
+                }
+            }
+
+            using (var response = request.SafeGetResponse())
+            {
+                Logger.Important($"StatusCode: {response.StatusCode}");
+                if (response.Headers.Count > 0)
+                {
+                    Logger.Debug("Headers:");
+                    foreach (var key in response.Headers.AllKeys)
+                    {
+                        Logger.Debug($"{key}:{response.Headers[key]}");
+                    }
+                }
+                Logger.Normal("Content:");
+                Logger.Normal(response.GetFormattedContent());
+            }
         }
     }
 }
