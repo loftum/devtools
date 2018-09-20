@@ -9,7 +9,7 @@ namespace ManualHttp.Core
     {
         public RequestLine RequestLine { get; set; }
         public Dictionary<string, string> Headers { get; set; }
-        public string MessageBody { get; set; }
+        public string Body { get; set; }
 
         public HttpRequestMessage()
         {
@@ -23,7 +23,7 @@ namespace ManualHttp.Core
                 .Append(RequestLine).Append("\r\n")
                 .Append(Headers.Format()).Append("\r\n")
                 .Append("\r\n")
-                .Append(MessageBody)
+                .Append(Body)
                 .ToString();
         }
     }

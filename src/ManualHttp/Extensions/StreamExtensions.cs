@@ -15,9 +15,28 @@ namespace ManualHttp.Extensions
             return index > items.Count ? defaultValue : items[index];
         }
 
-        public static Task WriteRequestMessageAsync(this Stream stream, HttpRequestMessage message, Encoding encoding)
+        public static async Task WriteRequestMessageAsync(this Stream stream, HttpRequestMessage message, Encoding encoding)
         {
-            return stream.WriteTextAsync(message.ToString(), encoding);
+            using (var writer = new StreamWriter(stream, encoding, 1024, true))
+            {
+                await writer.WriteAsync(message.RequestLine.ToString());
+                await writer.WriteAsync("\r\n");
+                await writer.WriteAsync(message.Headers.Format());
+                await writer.WriteAsync("\r\n\r\n");
+            }
+
+            if (message.Body != null &&
+                message.Headers.TryGetValue("Content-Length", out var val) &&
+                int.TryParse(val, out var contentLength) &&
+                contentLength > 0)
+            {
+                var bytes = encoding.GetBytes(message.Body);
+                if (bytes.Length > 0)
+                {
+                    await stream.WriteAsync(bytes);
+                }
+            }
+            await stream.FlushAsync();
         }
 
         public static async Task WriteTextAsync(this Stream stream, string message, Encoding encoding)

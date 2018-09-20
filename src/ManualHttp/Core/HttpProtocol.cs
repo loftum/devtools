@@ -2,6 +2,8 @@
 using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading.Tasks;
 using ManualHttp.Extensions;
 
@@ -9,81 +11,55 @@ namespace ManualHttp.Core
 {
     public class HttpProtocol
     {
-        private static Stream GetStream(HttpRequest request)
+        public Encoding Encoding { get; set; } = new UTF8Encoding(false);
+        public CookieStore CookieStore { get; set; } = new CookieStore();
+        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; } = AlwaysValid;
+
+        private static bool AlwaysValid(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
         {
-            var client = new TcpClient(request.Uri.Host, request.Uri.Port) { ReceiveTimeout = 10000 };
-            switch (request.Uri.Scheme)
+            return true;
+        }
+
+        private Stream GetStream(Uri uri)
+        {
+            var client = new TcpClient(uri.Host, uri.Port) { ReceiveTimeout = 10000 };
+            switch (uri.Scheme)
             {
                 case "https":
-                    return GetSecureStream(request, client);
+                    return GetSecureStream(uri, client);
                 default:
                     return client.GetStream();
             }
         }
 
-        private static Stream GetSecureStream(HttpRequest request, TcpClient client)
+        private Stream GetSecureStream(Uri uri, TcpClient client)
         {
             var stream = new SslStream(client.GetStream(),
                 false,
-                request.RemoteCertificateValidationCallback,
+                RemoteCertificateValidationCallback,
                 null);
-            stream.AuthenticateAsClient(request.Uri.Host);
+            stream.AuthenticateAsClient(uri.Host);
             return stream;
         }
 
-        public async Task<HttpResponse> GetResponseAsync(HttpRequest request)
+        public async Task<HttpResponseMessage> SendAsync(Uri uri, HttpRequestMessage message)
         {
-            var stream = GetStream(request);
-            var requestMessage = request.GetRequestMessage();
-            Console.WriteLine("Request:");
-            Console.WriteLine(requestMessage);
-            Console.WriteLine("<end>");
-
-            await stream.WriteRequestMessageAsync(requestMessage, request.Encoding);
-            var responseMessage = await stream.ReadResponseMessageAsync(request.Encoding);
-            Console.WriteLine("Response:");
-            Console.WriteLine(responseMessage);
-            Console.WriteLine("<end>");
-
-            foreach (var cookie in Cookie.ParseCookies(responseMessage.Headers.GetOrDefault("Set-Cookie")))
+            using (var stream = GetStream(uri))
             {
-                if (string.IsNullOrWhiteSpace(cookie.Domain))
+                await stream.WriteRequestMessageAsync(message, Encoding);
+                var responseMessage = await stream.ReadResponseMessageAsync(Encoding);
+
+                foreach (var cookie in Cookie.ParseCookies(responseMessage.Headers.GetOrDefault("Set-Cookie")))
                 {
-                    cookie.Domain = request.Uri.Host;
+                    if (string.IsNullOrWhiteSpace(cookie.Domain))
+                    {
+                        cookie.Domain = uri.Host;
+                    }
+                    CookieStore.Store(cookie);
                 }
-                request.CookieStore.Store(cookie);
+
+                return responseMessage;
             }
-
-            //switch (responseMessage.StatusLine.StatusCode)
-            //{
-            //    case "302":
-            //        if (!request.OnRedirect(responseMessage))
-            //        {
-            //            break;
-            //        }
-            //        var location = responseMessage.Headers["Location"];
-            //        var redirect = new HttpRequestMessage
-            //        {
-            //            RequestLine = new RequestLine
-            //            {
-            //                Method = "GET",
-            //                RequestUri = location
-            //            },
-            //            Headers = new Dictionary<string, string>
-            //            {
-            //                ["Referer"] = request.Uri.ToString()
-            //            }
-            //        };
-            //        stream.WriteRequestMessageAsync(redirect, request.Encoding);
-            //        var responseMessage = stream.ReadResponseMessageAsync(request.Encoding);
-            //        break;
-            //    default:
-            //        break;
-            //}
-
-            return new HttpResponse(responseMessage, stream, request.Encoding);
         }
-
-
     }
 }

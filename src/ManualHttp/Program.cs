@@ -24,7 +24,7 @@ namespace ManualHttp
             
             try
             {
-                Execute(args).Wait();
+                ExecuteAsync(args).Wait();
                 return 0;
             }
             catch (AuthenticationException)
@@ -41,62 +41,79 @@ namespace ManualHttp
             }
         }
 
-        private static Task Execute(string[] args)
+        private static Task ExecuteAsync(string[] args)
         {
             var verb = args[0];
             switch (verb.ToLowerInvariant())
             {
                 case "send":
-                    return Send(new Uri(args[1]), args[2]);
+                    return SendAsync(new Uri(args[1]), args[2]);
                 default:
                     var uri = new Uri(args[1]);
-                    return Fire(verb, uri);
+                    return Async(verb, uri);
             }
         }
 
-        private static async Task Fire(string verb, Uri uri)
+        private static async Task Async(string verb, Uri uri)
         {
             Console.WriteLine($"Host: {uri.Host}");
             Console.WriteLine($"Port: {uri.Port}");
             Console.WriteLine($"Path: {uri.AbsolutePath}");
             Console.WriteLine();
-            var request = new HttpRequest(uri)
+            var protocol = new HttpProtocol();
+
+            var request = new HttpRequestMessage
             {
-                Method = verb
+                RequestLine = new RequestLine
+                {
+                    HttpVersion = "HTTP/1.1",
+                    Method = verb,
+                    RequestUri = uri.PathAndQuery
+                },
+                Headers =
+                {
+                    ["Host"] = uri.Host,
+                    ["Connection"] = "keep-alive",
+                    ["User-Agent"] = "Casio Typewriter",
+                    ["Accept"] = "*/*"
+                }
             };
-
-            using (var response = await request.GetResponseAsync())
-            {
-                Console.WriteLine(response.RawMessage);
-                Console.WriteLine();
-            }
-
-            Console.WriteLine("Cookies:");
-            foreach (var cookie in request.CookieStore.GetAllCookies())
+            Console.WriteLine("<Request>");
+            Console.WriteLine(request);
+            Console.WriteLine("</Request>");
+            Console.WriteLine();
+            var response = await protocol.SendAsync(uri, request);
+            Console.WriteLine("<Response>");
+            Console.WriteLine(response);
+            Console.WriteLine("</Response>");
+            Console.WriteLine();
+            Console.WriteLine("<Cookies>");
+            foreach (var cookie in protocol.CookieStore.GetAllCookies())
             {
                 Console.WriteLine(cookie);
             }
+            Console.WriteLine("</Cookies>");
         }
 
-        private static async Task Send(Uri uri, string filename, Encoding encoding = null)
+        private static async Task SendAsync(Uri uri, string filename, Encoding encoding = null)
         {
             Console.WriteLine($"Host: {uri.Host}");
             Console.WriteLine($"Port: {uri.Port}");
             Console.WriteLine();
             encoding = encoding ?? new UTF8Encoding(false);
-            var content = string.Join("\r\n", File.ReadAllLines(filename, encoding).Concat(new []{"\r\n"}));
-            Console.WriteLine("Request message:");
-            Console.WriteLine("<");
-            Console.WriteLine(content);
-            Console.WriteLine(">");
+            var request = string.Join("\r\n", File.ReadAllLines(filename, encoding).Concat(new []{"\r\n"}));
+            Console.WriteLine("<Request>");
+            Console.WriteLine(request);
+            Console.WriteLine("</Request>");
             Console.WriteLine();
             using (var stream = uri.GetStream())
             {
-                await stream.WriteTextAsync(content, encoding);
+                await stream.WriteTextAsync(request, encoding);
                 var responseMessage = await stream.ReadResponseMessageAsync(encoding);
                 Console.WriteLine();
-                Console.WriteLine("Response:");
+                Console.WriteLine("<Response>");
                 Console.WriteLine(responseMessage);
+                Console.WriteLine("</Response>");
             }
         }
     }
