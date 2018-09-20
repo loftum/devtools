@@ -50,11 +50,11 @@ namespace ManualHttp
                     return SendAsync(new Uri(args[1]), args[2]);
                 default:
                     var uri = new Uri(args[1]);
-                    return Async(verb, uri);
+                    return FireAsync(verb, uri);
             }
         }
 
-        private static async Task Async(string verb, Uri uri)
+        private static async Task FireAsync(string verb, Uri uri)
         {
             Console.WriteLine($"Host: {uri.Host}");
             Console.WriteLine($"Port: {uri.Port}");
