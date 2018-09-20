@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using ManualHttp.Core;
 
 namespace ManualHttp.Extensions
@@ -14,38 +15,44 @@ namespace ManualHttp.Extensions
             return index > items.Count ? defaultValue : items[index];
         }
 
-        public static void WriteRequestMessage(this Stream stream, HttpRequestMessage message, Encoding encoding)
+        public static Task WriteRequestMessageAsync(this Stream stream, HttpRequestMessage message, Encoding encoding)
         {
-            stream.WriteText(message.ToString(), encoding);
+            return stream.WriteTextAsync(message.ToString(), encoding);
         }
 
-        public static void WriteText(this Stream stream, string message, Encoding encoding)
+        public static async Task WriteTextAsync(this Stream stream, string message, Encoding encoding)
         {
             var bytes = encoding.GetBytes(message);
             Console.WriteLine($"Writing {bytes.Length} bytes");
-            stream.Write(bytes, 0, bytes.Length);
-            stream.Flush();
+            await stream.WriteAsync(bytes, 0, bytes.Length);
+            await stream.FlushAsync();
         }
 
-        public static HttpResponseMessage ReadResponseMessage(this Stream stream, Encoding encoding)
+        public static async Task<HttpResponseMessage> ReadResponseMessageAsync(this Stream stream, Encoding encoding)
         {
             var message = new HttpResponseMessage();
 
             using (var reader = new StreamReader(stream, encoding, true, 1, true))
             {
-                message.StatusLine = reader.ReadStatusLine();
-                message.Headers = reader.ReadHeaders();
+                message.StatusLine = await reader.ReadStatusLineAsync();
+                message.Headers = await reader.ReadHeadersAsync();
+                if (message.Headers.TryGetValue("Content-Length", out var val) && int.TryParse(val, out var contentLength) && contentLength > 0)
+                {
+                    var buffer = new char[contentLength];
+                    await reader.ReadAsync(buffer, 0, contentLength);
+                    message.MessageBody = new string(buffer);
+                }
             }
             return message;
         }
 
-        public static Dictionary<string, string> ReadHeaders(this StreamReader reader)
+        public static async Task<Dictionary<string, string>> ReadHeadersAsync(this StreamReader reader)
         {
             var headers = new Dictionary<string, string>();
             string line;
-            while ((line = reader.ReadLine()) != string.Empty)
+            while ((line = await reader.ReadLineAsync()) != string.Empty)
             {
-                var separator = line.IndexOf(":");
+                var separator = line.IndexOf(":", StringComparison.Ordinal);
                 var key = line.Substring(0, separator).Trim();
                 var value = line.Substring(separator+1).Trim();
                 headers.SetOrAdd(key, value);
@@ -53,9 +60,9 @@ namespace ManualHttp.Extensions
             return headers;
         }
 
-        public static StatusLine ReadStatusLine(this StreamReader reader)
+        public static async Task<StatusLine> ReadStatusLineAsync(this StreamReader reader)
         {
-            var line = reader.ReadLine();
+            var line = await reader.ReadLineAsync();
             if (line == null)
             {
                 return null;

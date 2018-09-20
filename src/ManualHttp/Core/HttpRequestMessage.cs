@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using ManualHttp.Extensions;
 
@@ -13,7 +14,7 @@ namespace ManualHttp.Core
         public HttpRequestMessage()
         {
             RequestLine = new RequestLine();
-            Headers = new Dictionary<string, string>();
+            Headers = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         }
 
         public override string ToString()

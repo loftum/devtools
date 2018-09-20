@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Authentication;
 using System.Text;
+using System.Threading.Tasks;
 using ManualHttp.Core;
 using ManualHttp.Extensions;
 
@@ -23,7 +24,7 @@ namespace ManualHttp
             
             try
             {
-                Execute(args);
+                Execute(args).Wait();
                 return 0;
             }
             catch (AuthenticationException)
@@ -40,22 +41,20 @@ namespace ManualHttp
             }
         }
 
-        private static void Execute(string[] args)
+        private static Task Execute(string[] args)
         {
             var verb = args[0];
             switch (verb.ToLowerInvariant())
             {
                 case "send":
-                    Send(new Uri(args[1]), args[2]);
-                    break;
+                    return Send(new Uri(args[1]), args[2]);
                 default:
                     var uri = new Uri(args[1]);
-                    Fire(verb, uri);
-                    break;
+                    return Fire(verb, uri);
             }
         }
 
-        private static void Fire(string verb, Uri uri)
+        private static async Task Fire(string verb, Uri uri)
         {
             Console.WriteLine($"Host: {uri.Host}");
             Console.WriteLine($"Port: {uri.Port}");
@@ -65,16 +64,12 @@ namespace ManualHttp
             {
                 Method = verb
             };
-            Console.WriteLine("Rquest message");
-            Console.WriteLine(request.GetRequestMessage());
-            Console.WriteLine();
 
-            using (var response = request.GetResponse())
+            using (var response = await request.GetResponseAsync())
             {
                 Console.WriteLine(response.RawMessage);
                 Console.WriteLine();
             }
-
 
             Console.WriteLine("Cookies:");
             foreach (var cookie in request.CookieStore.GetAllCookies())
@@ -83,12 +78,12 @@ namespace ManualHttp
             }
         }
 
-        private static void Send(Uri uri, string filename, Encoding encoding = null)
+        private static async Task Send(Uri uri, string filename, Encoding encoding = null)
         {
             Console.WriteLine($"Host: {uri.Host}");
             Console.WriteLine($"Port: {uri.Port}");
             Console.WriteLine();
-            encoding = encoding ?? Encoding.UTF8;
+            encoding = encoding ?? new UTF8Encoding(false);
             var content = string.Join("\r\n", File.ReadAllLines(filename, encoding).Concat(new []{"\r\n"}));
             Console.WriteLine("Request message:");
             Console.WriteLine("<");
@@ -97,8 +92,8 @@ namespace ManualHttp
             Console.WriteLine();
             using (var stream = uri.GetStream())
             {
-                stream.WriteText(content, encoding);
-                var responseMessage = stream.ReadResponseMessage(encoding);
+                await stream.WriteTextAsync(content, encoding);
+                var responseMessage = await stream.ReadResponseMessageAsync(encoding);
                 Console.WriteLine();
                 Console.WriteLine("Response:");
                 Console.WriteLine(responseMessage);

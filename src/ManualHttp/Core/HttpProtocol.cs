@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using ManualHttp.Extensions;
 
 namespace ManualHttp.Core
@@ -29,12 +31,19 @@ namespace ManualHttp.Core
             return stream;
         }
 
-        public HttpResponse GetResponse(HttpRequest request)
+        public async Task<HttpResponse> GetResponseAsync(HttpRequest request)
         {
             var stream = GetStream(request);
+            var requestMessage = request.GetRequestMessage();
+            Console.WriteLine("Request:");
+            Console.WriteLine(requestMessage);
+            Console.WriteLine("<end>");
 
-            stream.WriteRequestMessage(request.GetRequestMessage(), request.Encoding);
-            var responseMessage = stream.ReadResponseMessage(request.Encoding);
+            await stream.WriteRequestMessageAsync(requestMessage, request.Encoding);
+            var responseMessage = await stream.ReadResponseMessageAsync(request.Encoding);
+            Console.WriteLine("Response:");
+            Console.WriteLine(responseMessage);
+            Console.WriteLine("<end>");
 
             foreach (var cookie in Cookie.ParseCookies(responseMessage.Headers.GetOrDefault("Set-Cookie")))
             {
@@ -65,8 +74,8 @@ namespace ManualHttp.Core
             //                ["Referer"] = request.Uri.ToString()
             //            }
             //        };
-            //        stream.WriteRequestMessage(redirect, request.Encoding);
-            //        var responseMessage = stream.ReadResponseMessage(request.Encoding);
+            //        stream.WriteRequestMessageAsync(redirect, request.Encoding);
+            //        var responseMessage = stream.ReadResponseMessageAsync(request.Encoding);
             //        break;
             //    default:
             //        break;

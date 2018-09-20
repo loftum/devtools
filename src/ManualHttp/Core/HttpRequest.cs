@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 using ManualHttp.Extensions;
 
 namespace ManualHttp.Core
@@ -28,7 +29,7 @@ namespace ManualHttp.Core
             }
             Uri = uri;
             Headers = new Dictionary<string, string>();
-            Encoding = Encoding.UTF8;
+            Encoding = new UTF8Encoding(false);
             RemoteCertificateValidationCallback = AlwaysValid;
             OnRedirect = m => true;
             CookieStore = new CookieStore();
@@ -39,9 +40,9 @@ namespace ManualHttp.Core
             return true;
         }
 
-        public HttpResponse GetResponse()
+        public Task<HttpResponse> GetResponseAsync()
         {
-            return new HttpProtocol().GetResponse(this);
+            return new HttpProtocol().GetResponseAsync(this);
         }
 
         public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
