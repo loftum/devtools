@@ -101,7 +101,9 @@ namespace ManualHttp
             Console.WriteLine($"Port: {uri.Port}");
             Console.WriteLine();
             encoding = encoding ?? new UTF8Encoding(false);
-            var request = string.Join("\r\n", File.ReadAllLines(filename, encoding).Concat(new []{"\r\n"}));
+            var request = string.Join("\r\n", File.ReadAllLines(filename, encoding)
+                .Where(l => !l.StartsWith("#"))
+                .Concat(new []{"\r\n"}));
             Console.WriteLine("<Request>");
             Console.WriteLine(request);
             Console.WriteLine("</Request>");

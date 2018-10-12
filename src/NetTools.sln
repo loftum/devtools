@@ -21,7 +21,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketServer", "SocketServe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketClient", "SocketClient\SocketClient.csproj", "{098E86E5-7B56-4141-98C3-96AB43B4461B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "50. Shared", "50. Shared", "{CC2B7B2F-12C3-419F-9FFF-2CA49AD39F46}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared.Commands", "Shared.Commands\Shared.Commands.shproj", "{8A1E5941-2AF4-4E9D-AA79-22BC842D4B37}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Shared.Commands\Shared.Commands.projitems*{8a1e5941-2af4-4e9d-aa79-22bc842d4b37}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -62,6 +69,7 @@ Global
 		{F204D52F-C3B7-4CD7-BB4C-1006C46FD44D} = {C35E2142-C526-4E73-9E12-740A0BF07E13}
 		{C0C84CB0-E2F7-4662-A063-FAE80412B6C5} = {731947EC-7E5A-4C4B-B80F-4A467D172412}
 		{098E86E5-7B56-4141-98C3-96AB43B4461B} = {731947EC-7E5A-4C4B-B80F-4A467D172412}
+		{8A1E5941-2AF4-4E9D-AA79-22BC842D4B37} = {CC2B7B2F-12C3-419F-9FFF-2CA49AD39F46}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CBC2F9B8-968C-4D92-BEC8-6E4AA5AE4E0D}
