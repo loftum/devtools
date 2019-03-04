@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Http.Commands
+namespace ManualHttp.Commands
 {
     public class Commander
     {

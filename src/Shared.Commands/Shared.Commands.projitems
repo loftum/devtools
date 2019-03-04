@@ -11,7 +11,8 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Commands\Argument.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Commands\Command.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\Commander.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\CommanderExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Commands\CommandParameter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Commands\CommandParser.cs" />
   </ItemGroup>
 </Project>

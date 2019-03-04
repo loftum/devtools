@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Shared.Commands
+namespace ManualHttp.Commands
 {
     public class Argument
     {
@@ -19,28 +19,24 @@ namespace Shared.Commands
         public Argument(int position, string raw)
         {
             Position = position;
-            if (string.IsNullOrEmpty(raw))
+            if (!string.IsNullOrEmpty(raw))
             {
-                return;
-            }
-
-            if (raw.StartsWith("-"))
-            {
-                var index = raw.IndexOf("=", StringComparison.InvariantCultureIgnoreCase);
-                if (index > 0)
+                if (raw.StartsWith("-"))
                 {
-                    Name = raw.Substring(1, index);
-                    Value = raw.Substring(index + 1);
+                    var index = raw.IndexOf(":", StringComparison.InvariantCultureIgnoreCase);
+                    Name = index > 0 ? raw.Substring(1, index - 1) : raw.Substring(1);
+                    Value = index > 0 ? raw.Substring(index + 1) : null;
                 }
                 else
                 {
-                    Name = raw.Substring(1);
+                    Value = raw;
                 }
             }
-            else
-            {
-                Value = raw;
-            }
+        }
+
+        public override string ToString()
+        {
+            return IsNamed ? $"-{Name}:{Value}" : Value;
         }
     }
 }

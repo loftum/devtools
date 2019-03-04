@@ -13,4 +13,6 @@
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
   </ItemGroup>
 
+  <Import Project="..\Shared.Commands\Shared.Commands.projitems" Label="Shared" />
+
 </Project>

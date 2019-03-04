@@ -1,5 +1,5 @@
 ﻿using System;
-using Http.Commands;
+using ManualHttp.Commands;
 
 namespace Http
 {

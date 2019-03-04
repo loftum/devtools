@@ -1,53 +1,61 @@
 ﻿using System;
 using System.Linq;
-using System.Reflection;
 
-namespace Shared.Commands
+namespace ManualHttp.Commands
 {
     public class CommandParameter
     {
-        private readonly ParameterInfo _parameter;
+        public string Name { get; }
+        public int Position { get; }
+        public Type Type { get; }
+        public bool IsOptional { get; }
+        public object DefaultValue { get; }
 
-        public CommandParameter(ParameterInfo parameter)
+        public CommandParameter(string name, Type type, int position, bool isOptional, object defaultValue)
         {
-            _parameter = parameter;
+            Name = name;
+            Type = type;
+            Position = position;
+            IsOptional = isOptional;
+            DefaultValue = defaultValue;
         }
 
         public object GetValue(Argument[] args)
         {
-            var arg = args.FirstOrDefault(a => a.Matches(_parameter.Position, _parameter.Name));
+            var arg = args.FirstOrDefault(a => a.Matches(Position, Name));
             if (arg != null)
             {
                 return Parse(arg);
             }
-            if (_parameter.IsOptional)
+            if (IsOptional)
             {
-                return _parameter.DefaultValue;
+                return DefaultValue;
             }
-            throw new ArgumentException($"Please specify {_parameter.Name}");
+            throw new ArgumentException($"You must specify {Name}");
         }
 
         private object Parse(Argument argument)
         {
-            if (_parameter.ParameterType == typeof(string))
+            switch (Type)
             {
-                return argument.Value;
+                case Type t when t == typeof(string):
+                    return argument.Value;
+                case Type t when t == typeof(bool):
+                    if (argument.Value == null)
+                    {
+                        return argument.IsNamed;
+                    }
+                    return bool.TryParse(argument.Value, out var ret) && ret;
+                case Type t when t.IsEnum:
+                    return Enum.Parse(Type, argument.Value, true);
+                default:
+                    return Convert.ChangeType(argument.Value, Type);
             }
-            if (_parameter.ParameterType == typeof(bool))
-            {
-                if (argument.Value == null)
-                {
-                    return argument.IsNamed;
-                }
-                return bool.TryParse(argument.Value, out var ret) && ret;
-            }
-            return Convert.ChangeType(argument.Value, _parameter.ParameterType);
         }
 
         public override string ToString()
         {
-            var p = $"{_parameter.ParameterType.Name} {_parameter.Name}";
-            return _parameter.IsOptional ? $"[{p}]" : p;
+            return IsOptional ? $"[{Name}]" : Name;
         }
     }
 }
