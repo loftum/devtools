@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Sockets;
 
 namespace TcPing
@@ -27,10 +26,7 @@ namespace TcPing
             {
                 using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                 {
-                    var entry = Dns.GetHostEntry(arg.Host);
-                    Print(entry);
-                    var handle = socket.BeginConnect(arg.Host, arg.Port, null, null);
-                    var connected = handle.AsyncWaitHandle.WaitOne(arg.Timeout, true);
+                    var connected = socket.Connect(arg.Host, arg.Port, arg.Timeout);
                     if (!connected)
                     {
                         throw new SocketException(ConnectionTimeout);
@@ -61,26 +57,6 @@ namespace TcPing
             }
 
             return 0;
-        }
-
-        private static void Print(IPHostEntry entry)
-        {
-            switch (entry.AddressList.Length)
-            {
-                case 0:
-                    Console.WriteLine($"No addresses for {entry.HostName}");
-                    break;
-                case 1:
-                    Console.WriteLine($"Remote address: {entry.AddressList[0]}");
-                    break;
-                default:
-                    Console.WriteLine("Remote addresses:");
-                    foreach (var address in entry.AddressList)
-                    {
-                        Console.WriteLine($" - {address}");
-                    }
-                    break;
-            }
         }
 
         private static void PrintUsage()

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using ManualHttp.Core;
@@ -55,11 +56,34 @@ namespace ManualHttp.Extensions
             {
                 message.StatusLine = await reader.ReadStatusLineAsync();
                 message.Headers = await reader.ReadHeadersAsync();
+
                 if (message.Headers.TryGetValue("Content-Length", out var val) && int.TryParse(val, out var contentLength) && contentLength > 0)
                 {
                     var buffer = new char[contentLength];
                     await reader.ReadAsync(buffer, 0, contentLength);
                     message.MessageBody = new string(buffer);
+                }
+                else
+                {
+                    
+                    var first = new char[4];
+
+                    await reader.ReadAsync(first, 0, first.Length);
+
+                    var length = first[0] << 3 | first[1] << 2 | first[2] << 1 | first[0];
+                    Console.WriteLine($"Length: {length}");
+
+                    //var builder = new List<char>();
+                    //var buffer = new char[1];
+                    //while (await reader.ReadAsync(buffer, 0, 1) > 0 && buffer[0] != '\b')
+                    //{
+                    //    Console.WriteLine($"Read: >{buffer[0]}<");
+                    //    builder.Add(buffer[0]);
+                    //    buffer[0] = (char) 0;
+                    //}
+                    //var s = new string(builder.ToArray());
+                    //Console.WriteLine(s);
+                    //message.MessageBody = s;
                 }
             }
             return message;

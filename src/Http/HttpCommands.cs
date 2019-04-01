@@ -16,7 +16,7 @@ namespace Http
             Send("GET", url, accept, username, password, certFile, certPass);
         }
 
-        public static void Send(string method, string url, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
+        public static void Send(string method, string url, string host = null, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
         {
             var request = WebRequester.Create(method, url);
             if (username != null || password != null)
@@ -26,6 +26,11 @@ namespace Http
             if (certFile != null)
             {
                 request = request.WithCert(certFile, certPass);
+            }
+
+            if (host != null)
+            {
+                request.Host = host;
             }
 
             if (request.Headers.Count > 0)

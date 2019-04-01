@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
@@ -30,10 +32,22 @@ namespace ManualHttp.Core
             var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
             {
                 SendTimeout = sendTimeout,
-                ReceiveTimeout = receiveTimeout
+                ReceiveTimeout = receiveTimeout,
             };
-            socket.Connect(host, port);
-            return new NetworkStream(socket);
+            if (socket.Connect(host, port, TimeSpan.FromMilliseconds(receiveTimeout)))
+            {
+                return new NetworkStream(socket);
+            }
+            throw new IOException($"Could not connect to {host}:{port}");
+            //if (IPAddress.TryParse(host, out var ipAddress))
+            //{
+            //    socket.Connect(ipAddress, port);
+            //}
+            //else
+            //{
+            //    socket.Connect(host, port);
+            //}
+            
         }
 
         private static bool AlwaysValid(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
