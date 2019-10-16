@@ -10,6 +10,7 @@ namespace Pat.Models
 
         public async Task Update(HttpWebResponse response)
         {
+            Body = null;            
             using (var stream = response.GetResponseStream())
             {
                 if (stream == null)

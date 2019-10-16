@@ -8,7 +8,7 @@ namespace ManualHttp.Core
     public class HttpRequestMessage
     {
         public RequestLine RequestLine { get; set; }
-        public Dictionary<string, string> Headers { get; set; }
+        public Dictionary<string, string> Headers { get; }
         public string Body { get; set; }
 
         public HttpRequestMessage()

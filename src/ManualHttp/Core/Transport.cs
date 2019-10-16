@@ -23,6 +23,7 @@ namespace ManualHttp.Core
                 false,
                 AlwaysValid,
                 null);
+            
             stream.AuthenticateAsClient(host);
             return stream;
         }

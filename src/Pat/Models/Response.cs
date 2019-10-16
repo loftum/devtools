@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Net;
+using System.Runtime.Remoting.Channels;
 using Pat.ViewModels;
 
 namespace Pat.Models
@@ -38,6 +39,15 @@ namespace Pat.Models
                 Cookies.Add(cookie);
             }
             
+        }
+
+        public void Clear()
+        {
+            StatusCode = 0;
+            StatusDescription = null;
+            ContentType = null;
+            Headers.Clear();
+            Cookies.Clear();
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,42 +10,58 @@ using ManualHttp.Extensions;
 
 namespace ManualHttp.Core
 {
+    public class TransportData
+    {
+        public Uri Uri { get; set; }
+        public SslProtocols SslProtocols { get; set; }
+        public bool CheckCertificateRevocation { get; set; }
+        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; } = AlwaysValid;
+        
+        private static bool AlwaysValid(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
+        {
+            return true;
+        }
+    }
+
+    internal static class TcpClientExtensions
+    {
+        public static SslStream GetSecureStream(this TcpClient client, TransportData transport)
+        {
+            var stream = new SslStream(client.GetStream(),
+                false,
+                transport.RemoteCertificateValidationCallback,
+                null);
+            stream.AuthenticateAsClient(transport.Uri.Host, new X509CertificateCollection(), transport.SslProtocols, transport.CheckCertificateRevocation);
+            Console.WriteLine($"SSL Protocol: {stream.SslProtocol}");
+            return stream;
+        }
+    }
+    
     public class HttpProtocol
     {
         public Encoding Encoding { get; set; } = new UTF8Encoding(false);
         public CookieStore CookieStore { get; set; } = new CookieStore();
-        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; } = AlwaysValid;
 
         private static bool AlwaysValid(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
         {
             return true;
         }
 
-        private Stream GetStream(Uri uri)
+        private static Stream GetStream(TransportData transport)
         {
-            var client = new TcpClient(uri.Host, uri.Port) { ReceiveTimeout = 10000 };
-            switch (uri.Scheme)
+            var client = new TcpClient(transport.Uri.Host, transport.Uri.Port) { ReceiveTimeout = 10000 };
+            switch (transport.Uri.Scheme)
             {
                 case "https":
-                    return GetSecureStream(uri, client);
+                    return client.GetSecureStream(transport);
                 default:
                     return client.GetStream();
             }
         }
 
-        private Stream GetSecureStream(Uri uri, TcpClient client)
+        public async Task<HttpResponseMessage> SendAsync(TransportData transport, HttpRequestMessage message)
         {
-            var stream = new SslStream(client.GetStream(),
-                false,
-                RemoteCertificateValidationCallback,
-                null);
-            stream.AuthenticateAsClient(uri.Host);
-            return stream;
-        }
-
-        public async Task<HttpResponseMessage> SendAsync(Uri uri, HttpRequestMessage message)
-        {
-            using (var stream = GetStream(uri))
+            using (var stream = GetStream(transport))
             {
                 await stream.WriteRequestMessageAsync(message, Encoding);
                 var responseMessage = await stream.ReadResponseMessageAsync(Encoding);
@@ -53,7 +70,7 @@ namespace ManualHttp.Core
                 {
                     if (string.IsNullOrWhiteSpace(cookie.Domain))
                     {
-                        cookie.Domain = uri.Host;
+                        cookie.Domain = transport.Uri.Host;
                     }
                     CookieStore.Store(cookie);
                 }

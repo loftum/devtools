@@ -5,6 +5,8 @@ namespace Pat.Models
 {
     public class Request : PropertyChangeNotifier
     {
+        public virtual string ProtocolVersion { get; set; }
+        public virtual SecurityProtocolType SecurityProtocol { get; set; }
         public virtual string Method { get; set; }
         public virtual string Uri { get; set; }
         public virtual int Timeout { get; set; }
@@ -19,6 +21,8 @@ namespace Pat.Models
 
         public void Update(HttpWebRequest request)
         {
+            ProtocolVersion = request.ProtocolVersion.ToString();
+            SecurityProtocol = ServicePointManager.SecurityProtocol;
             Method = request.Method;
             Uri = request.RequestUri?.ToString();
             Timeout = request.Timeout;
@@ -40,5 +44,7 @@ namespace Pat.Models
                 Cookies.Add(cookie);
             }
         }
+
+        
     }
 }

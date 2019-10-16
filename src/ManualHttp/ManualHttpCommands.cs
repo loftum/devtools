@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 using ManualHttp.Core;
@@ -22,7 +23,7 @@ namespace ManualHttp
             Console.WriteLine($"Host: {addressOrIp}");
             Console.WriteLine($"Port: {port}");
             Console.WriteLine();
-            encoding = encoding ?? new UTF8Encoding(false);
+            encoding ??= new UTF8Encoding(false);
             var request = string.Join("\r\n", File.ReadAllLines(file, encoding)
                 .Where(l => !l.StartsWith("#"))
                 .Concat(new[] { "\r\n" }));
@@ -46,17 +47,23 @@ namespace ManualHttp
             return ssl ? 443 : 80;
         }
 
-        public static void Fire(string verb, string url)
+        public static void Fire(string verb, string url, SslProtocols requireSslProtocol = SslProtocols.Tls13, bool checkCertificateRevocation = false)
         {
-            FireAsync(verb, url).Wait();
+            var transport = new TransportData
+            {
+                Uri = new Uri(url),
+                SslProtocols = requireSslProtocol,
+                CheckCertificateRevocation = checkCertificateRevocation
+            };
+            FireAsync(verb, transport).Wait();
         }
 
-        private static async Task FireAsync(string verb, string url)
+        private static async Task FireAsync(string verb, TransportData transport)
         {
-            var uri = new Uri(url);
-            Console.WriteLine($"Host: {uri.Host}");
-            Console.WriteLine($"Port: {uri.Port}");
-            Console.WriteLine($"Path: {uri.AbsolutePath}");
+            Console.WriteLine($"Host: {transport.Uri.Host}");
+            Console.WriteLine($"Port: {transport.Uri.Port}");
+            Console.WriteLine($"Path: {transport.Uri.AbsolutePath}");
+            Console.WriteLine($"Require SSL protocol: {transport.SslProtocols}");
             Console.WriteLine();
             var protocol = new HttpProtocol();
 
@@ -66,11 +73,11 @@ namespace ManualHttp
                 {
                     HttpVersion = "HTTP/1.1",
                     Method = verb,
-                    RequestUri = uri.PathAndQuery
+                    RequestUri = transport.Uri.PathAndQuery
                 },
                 Headers =
                 {
-                    ["Host"] = uri.Host,
+                    ["Host"] = transport.Uri.Host,
                     ["Connection"] = "keep-alive",
                     ["User-Agent"] = "Casio Typewriter",
                     ["Accept"] = "*/*"
@@ -80,7 +87,7 @@ namespace ManualHttp
             Console.WriteLine(request);
             Console.WriteLine("</Request>");
             Console.WriteLine();
-            var response = await protocol.SendAsync(uri, request);
+            var response = await protocol.SendAsync(transport, request);
             Console.WriteLine("<Response>");
             Console.WriteLine(response);
             Console.WriteLine("</Response>");

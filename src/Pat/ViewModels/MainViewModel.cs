@@ -55,10 +55,16 @@ namespace Pat.ViewModels
             try
             {
                 IsNotBusy = false;
+                ServicePointManager.SecurityProtocol = GlobalSettings.TLSVersion;
+                ServicePointManager.Expect100Continue = GlobalSettings.Expect100Continue;
+                ServicePointManager.CheckCertificateRevocationList = GlobalSettings.CheckCertificateRevocationList;
+                
                 var request = Inputs.CreateRequest();
+                
                 request.CookieContainer = Cookies.Container;
                 try
                 {
+                    ResponseContent.Body = null;
                     using (var response = (HttpWebResponse)await request.GetResponseAsync())
                     {
                         Response.Update(response);
@@ -74,20 +80,19 @@ namespace Pat.ViewModels
             }
             catch (WebException ex)
             {
-                var response = ex.Response as HttpWebResponse;
-                if (response != null)
+                if (ex.Response is HttpWebResponse response)
                 {
                    Response.Update(response);
                 }
                 else
                 {
-                    Response.StatusCode = 0;
+                    Response.Clear();
                     ResponseContent.Body = ex.ToString();
                 }
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 0;
+                Response.Clear();
                 ResponseContent.Body = ex.ToString();
             }
             finally
