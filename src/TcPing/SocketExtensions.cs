@@ -46,7 +46,7 @@ namespace TcPing
         {
             var handle = socket.BeginConnect(ip, port, null, null);
             var connected = handle.AsyncWaitHandle.WaitOne(timeout, true);
-            return connected;
+            return socket.Connected;
         }
     }
 }

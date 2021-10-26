@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace TcPing
 {
@@ -8,29 +9,40 @@ namespace TcPing
     {
         private const int ConnectionTimeout = 10060;
 
-        static int Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             var arguments = TcPingArgs.Parse(args);
-            if (arguments != null)
+            if (arguments == null)
             {
-                return Ping(arguments);
+                PrintUsage();
+                return 0;
+                
             }
 
-            PrintUsage();
-            return -1;
+            try
+            {
+                return await Ping(arguments);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return -1;
+            }
         }
 
-        private static int Ping(TcPingArgs arg)
+        private static async Task<int> Ping(TcPingArgs arg)
         {
             try
             {
                 using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                 {
+                    Console.WriteLine($"Connecting to {arg.Host}:{arg.Port}");
                     var connected = socket.Connect(arg.Host, arg.Port, arg.Timeout);
-                    if (!connected)
+                    if (!socket.Connected)
                     {
                         throw new SocketException(ConnectionTimeout);
                     }
+                    
                     socket.Close();
                 }
 
