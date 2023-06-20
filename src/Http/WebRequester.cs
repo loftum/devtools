@@ -4,72 +4,71 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
 
-namespace Http
+namespace Http;
+
+public static class WebRequester
 {
-    public static class WebRequester
+    public static HttpWebRequest Create(string method, string url)
     {
-        public static HttpWebRequest Create(string method, string url)
+        var request = WebRequest.CreateHttp(url);
+        request.Method = method;
+        return request;
+    }
+
+    public static HttpWebRequest WithCert(this HttpWebRequest request, string certFile, string certPass)
+    {
+        var cert = GetCert(certFile, certPass);
+        request.ClientCertificates.Add(cert);
+        return request;
+    }
+
+    public static HttpWebResponse SafeGetResponse(this HttpWebRequest request)
+    {
+        try
         {
-            var request = WebRequest.CreateHttp(url);
-            request.Method = method;
-            return request;
+            return (HttpWebResponse) request.GetResponse();
         }
-
-        public static HttpWebRequest WithCert(this HttpWebRequest request, string certFile, string certPass)
+        catch (WebException e)
         {
-            var cert = GetCert(certFile, certPass);
-            request.ClientCertificates.Add(cert);
-            return request;
-        }
-
-        public static HttpWebResponse SafeGetResponse(this HttpWebRequest request)
-        {
-            try
+            if (e.Response != null)
             {
-                return (HttpWebResponse) request.GetResponse();
-            }
-            catch (WebException e)
-            {
-                if (e.Response != null)
-                {
-                    return (HttpWebResponse) e.Response;
-                }
-
-                throw;
-            }
-        }
-
-        private static X509Certificate2 GetCert(string certFile, string certPass)
-        {
-            if (!File.Exists(certFile))
-            {
-                throw new ArgumentException($"Certificate file {certFile} does not exist", nameof(certFile));
+                return (HttpWebResponse) e.Response;
             }
 
-            return new X509Certificate2(File.ReadAllBytes(certFile), certPass);
+            throw;
         }
     }
 
-    public static class ResponseExtensions
+    private static X509Certificate2 GetCert(string certFile, string certPass)
     {
-        public static object GetFormattedContent(this HttpWebResponse response)
+        if (!File.Exists(certFile))
         {
-            using (var stream = response.GetResponseStream())
-            {
-                if (stream == null)
-                {
-                    return "";
-                }
+            throw new ArgumentException($"Certificate file {certFile} does not exist", nameof(certFile));
+        }
 
-                using (var reader = new StreamReader(stream))
+        return new X509Certificate2(File.ReadAllBytes(certFile), certPass);
+    }
+}
+
+public static class ResponseExtensions
+{
+    public static object GetFormattedContent(this HttpWebResponse response)
+    {
+        using (var stream = response.GetResponseStream())
+        {
+            if (stream == null)
+            {
+                return "";
+            }
+
+            using (var reader = new StreamReader(stream))
+            {
+                switch (response.ContentType)
                 {
-                    switch (response.ContentType)
-                    {
-                        case "application/json":
-                            return JsonConvert.DeserializeObject(reader.ReadToEnd());
-                        default:
-                            return reader.ReadToEnd();
-                    }
+                    case "application/json":
+                        return JsonConvert.DeserializeObject(reader.ReadToEnd());
+                    default:
+                        return reader.ReadToEnd();
                 }
             }
         }

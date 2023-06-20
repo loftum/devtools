@@ -1,61 +1,60 @@
 ﻿using System;
 using System.Linq;
 
-namespace ManualHttp.Commands
+namespace ManualHttp.Commands;
+
+public class CommandParameter
 {
-    public class CommandParameter
+    public string Name { get; }
+    public int Position { get; }
+    public Type Type { get; }
+    public bool IsOptional { get; }
+    public object DefaultValue { get; }
+
+    public CommandParameter(string name, Type type, int position, bool isOptional, object defaultValue)
     {
-        public string Name { get; }
-        public int Position { get; }
-        public Type Type { get; }
-        public bool IsOptional { get; }
-        public object DefaultValue { get; }
+        Name = name;
+        Type = type;
+        Position = position;
+        IsOptional = isOptional;
+        DefaultValue = defaultValue;
+    }
 
-        public CommandParameter(string name, Type type, int position, bool isOptional, object defaultValue)
+    public object GetValue(Argument[] args)
+    {
+        var arg = args.FirstOrDefault(a => a.Matches(Position, Name));
+        if (arg != null)
         {
-            Name = name;
-            Type = type;
-            Position = position;
-            IsOptional = isOptional;
-            DefaultValue = defaultValue;
+            return Parse(arg);
         }
+        if (IsOptional)
+        {
+            return DefaultValue;
+        }
+        throw new ArgumentException($"You must specify {Name}");
+    }
 
-        public object GetValue(Argument[] args)
+    private object Parse(Argument argument)
+    {
+        switch (Type)
         {
-            var arg = args.FirstOrDefault(a => a.Matches(Position, Name));
-            if (arg != null)
-            {
-                return Parse(arg);
-            }
-            if (IsOptional)
-            {
-                return DefaultValue;
-            }
-            throw new ArgumentException($"You must specify {Name}");
+            case Type t when t == typeof(string):
+                return argument.Value;
+            case Type t when t == typeof(bool):
+                if (argument.Value == null)
+                {
+                    return argument.IsNamed;
+                }
+                return bool.TryParse(argument.Value, out var ret) && ret;
+            case { IsEnum: true}:
+                return Enum.Parse(Type, argument.Value, true);
+            default:
+                return Convert.ChangeType(argument.Value, Type);
         }
+    }
 
-        private object Parse(Argument argument)
-        {
-            switch (Type)
-            {
-                case Type t when t == typeof(string):
-                    return argument.Value;
-                case Type t when t == typeof(bool):
-                    if (argument.Value == null)
-                    {
-                        return argument.IsNamed;
-                    }
-                    return bool.TryParse(argument.Value, out var ret) && ret;
-                case Type t when t.IsEnum:
-                    return Enum.Parse(Type, argument.Value, true);
-                default:
-                    return Convert.ChangeType(argument.Value, Type);
-            }
-        }
-
-        public override string ToString()
-        {
-            return IsOptional ? $"[{Name}]" : Name;
-        }
+    public override string ToString()
+    {
+        return IsOptional ? $"[{Name}]" : Name;
     }
 }
