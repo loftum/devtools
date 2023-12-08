@@ -8,6 +8,4 @@
         <LangVersion>default</LangVersion>
     </PropertyGroup>
 
-    <Import Project="..\Shared.Commands\Shared.Commands.projitems" Label="Shared" />
-
 </Project>
