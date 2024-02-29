@@ -88,6 +88,9 @@ public class CertificateGenerator
         var dn = new StringBuilder();
             
         dn.Append("CN=\"" + input.CommonName.Replace("\"", "\"\"") + "\"");
+
+        var organization = input.Organization ?? input.Ca.GetOrganization();
+        dn.Append(",O=\"" + organization.Replace("\"", "\"\"") + "\"");
             
         if (input.OrganizationalUnits != null)
         {
@@ -97,7 +100,7 @@ public class CertificateGenerator
             }    
         }
             
-        dn.Append(",O=\"" + input.Organization.Replace("\"", "\"\"") + "\"");
+        
         dn.Append(",C=" + input.CountryCode.ToUpper());
 
         var distinguishedName = new X500DistinguishedName(dn.ToString());

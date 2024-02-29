@@ -18,7 +18,6 @@ public class CertificateCommands
         string organization = null,
         string[] organizationalUnits = null)
     {
-
         var now = DateTimeOffset.UtcNow;
         var input = new CaInput
         {
@@ -32,14 +31,47 @@ public class CertificateCommands
         };
             
         using var ca = CertificateGenerator.CreateCa(input);
-            
-        File.WriteAllBytes(outPath, ca.Export(X509ContentType.Pfx, password));
+        
+        Write(ca, outPath, password);
+    }
+
+    private static void Write(X509Certificate2 cert, OutPath path, string password)
+    {
+        Write(cert, null, path, password);
+    }
+    
+    private static void Write(X509Certificate2 cert, X509Certificate2 ca, OutPath path, string password)
+    {
+        var certs = new[] {cert, ca}.Where(c => c != null); 
+        
+        if (path.IsDirectory || !path.HasExtension)
+        {
+            var commonName = cert.GetCommonName();
+            cert.WritePfx(path.Combine($"{commonName}.pfx"), password);
+            certs.WritePem(path.Combine($"{commonName}.pem"));
+            cert.WriteKey(path.Combine($"{commonName}.key"));
+            return;
+        }
+
+        switch (path.Extension)
+        {
+            case "pfx":
+                cert.WritePfx(path, password);
+                return;
+            case "pem":
+                certs.WritePem(path);
+                cert.WriteKey(path.WithExtension("key"));
+                return;
+            default:
+                throw new InvalidOperationException($"Invalid path {path}");
+        }
     }
 
     public static void Create(CertType type,
         string commonName,
         string caPath,
         string outPath,
+        string password = null,
         DateTimeOffset? notBefore = null,
         DateTimeOffset? notAfter = null,
         string[] dnsNames = null,
@@ -64,21 +96,8 @@ public class CertificateCommands
         };
             
         using var cert = CertificateGenerator.CreateCertificate(input);
-            
-        File.WriteAllBytes($"{outPath}.pfx", cert.Export(X509ContentType.Pfx));
-            
-        var certificatePem = PemEncoding.Write("CERTIFICATE", cert.RawData);
-            
-            
-        File.WriteAllText($"{outPath}.pem", new string(certificatePem) + "\n" + new string(PemEncoding.Write("CERTIFICATE", caCert.RawData)));
-            
-        var key = cert.GetRSAPrivateKey();
-        byte[] pubKeyBytes = key.ExportSubjectPublicKeyInfo();
-        byte[] privKeyBytes = key.ExportPkcs8PrivateKey();
-        char[] pubKeyPem = PemEncoding.Write("PUBLIC KEY", pubKeyBytes);
-        char[] privKeyPem = PemEncoding.Write("PRIVATE KEY", privKeyBytes);
-            
-        File.WriteAllText($"{outPath}.key", new string(privKeyPem));
+
+        Write(cert, caCert, outPath, password);
     }
 
     public static void Export(string inputPath, string outputPath)
@@ -126,11 +145,28 @@ public class CertificateCommands
         return stream.ToArray();
     }
 
-    private static X509Certificate2 ReadCertFile(string path)
+    private static X509Certificate2 ReadCertFile(OutPath path)
     {
-        var bytes = File.ReadAllBytes(path);
-        var cert = new X509Certificate2(bytes);
-        return cert;
+        switch (path.Extension)
+        {
+            case "pfx":
+            {
+                var bytes = File.ReadAllBytes(path);
+                var cert = new X509Certificate2(bytes);
+                return cert;
+            }
+            case "pem":
+            {
+                var cert = X509Certificate2.CreateFromPemFile(path, path.WithExtension("key"));
+                return cert;
+            }
+            default:
+            {
+                var bytes = File.ReadAllBytes(path);
+                var cert = new X509Certificate2(bytes);
+                return cert;
+            }
+        }
     }
 
     public static void Read(string file)
@@ -163,3 +199,4 @@ public class CertificateCommands
         Console.WriteLine(builder);
     }
 }
+

@@ -38,9 +38,9 @@ public class CommandParameter
     {
         switch (Type)
         {
-            case Type t when t == typeof(string):
+            case not null when Type == typeof(string):
                 return argument.Value;
-            case Type t when t == typeof(bool):
+            case not null when Type == typeof(bool):
                 if (argument.Value == null)
                 {
                     return argument.IsNamed;
