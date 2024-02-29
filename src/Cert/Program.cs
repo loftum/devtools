@@ -1,32 +1,26 @@
-﻿using System;
-using System.Threading.Tasks;
-using Cert.Commands;
+﻿using ManualHttp.Commands;
 
-namespace Cert
+namespace Cert;
+
+internal class Program
 {
-    internal class Program
+    public static async Task<int> Main(string[] args)
     {
-        public static async Task<int> Main(string[] args)
+        try
         {
-            try
-            {
-                var commander = new Commander().RegisterStaticMethodsOf<CertificateCommands>();
-                commander.Execute(args);
-                return 0;
-            }
-            catch (ArgumentException e)
-            {
-                Console.WriteLine(e.Message);
-                return -1;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return -1;
-            }
+            var commander = new Commander().RegisterStaticMethodsOf<CertificateCommands>();
+            commander.Execute(args);
+            return 0;
+        }
+        catch (ArgumentException e)
+        {
+            Console.WriteLine(e.Message);
+            return -1;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return -1;
         }
     }
 }
-
-
-

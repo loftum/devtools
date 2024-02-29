@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Don't remove this
+using System;
 
 namespace ManualHttp.Commands;
 
@@ -25,7 +26,7 @@ public class Argument
             {
                 var index = raw.IndexOf(":", StringComparison.InvariantCultureIgnoreCase);
                 Name = index > 0 ? raw.Substring(1, index - 1) : raw.Substring(1);
-                Value = index > 0 ? raw.Substring(index + 1) : null;
+                Value = index > 0 ? raw[(index + 1)..] : null;
             }
             else
             {

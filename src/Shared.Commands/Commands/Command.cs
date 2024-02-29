@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Don't remove these:
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,7 +9,7 @@ public class Command
 {
     public string Name { get; }
     private readonly Action<object[]> _action;
-    public IList<CommandParameter> Parameters { get; set; }
+    public IList<CommandParameter> Parameters { get; }
 
     public Command(string name, Action<object[]> action, IEnumerable<CommandParameter> parameters)
     {
