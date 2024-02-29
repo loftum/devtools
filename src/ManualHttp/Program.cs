@@ -2,31 +2,30 @@
 using System.Security.Authentication;
 using ManualHttp.Commands;
 
-namespace ManualHttp
+namespace ManualHttp;
+
+class Program
 {
-    class Program
+    static int Main(string[] args)
     {
-        static int Main(string[] args)
+        var commander = new Commander().RegisterStaticMethodsOf<ManualHttpCommands>();
+        try
         {
-            var commander = new Commander().RegisterStaticMethodsOf<ManualHttpCommands>();
-            try
-            {
-                commander.Execute(args);
-                return 0;
-            }
-            catch (AuthenticationException)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Could not authenticate");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(ex);
-                Console.ResetColor();
-                return -1;
-            }
+            commander.Execute(args);
+            return 0;
+        }
+        catch (AuthenticationException)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Could not authenticate");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(ex);
+            Console.ResetColor();
+            return -1;
         }
     }
 }
