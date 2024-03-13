@@ -44,12 +44,22 @@ public class CertificateCommands
     {
         var certs = new[] {cert, ca}.Where(c => c != null); 
         
-        if (path.IsDirectory || !path.HasExtension)
+        if (path.IsDirectory)
         {
             var commonName = cert.GetCommonName();
             cert.WritePfx(path.Combine($"{commonName}.pfx"), password);
-            certs.WritePem(path.Combine($"{commonName}.pem"));
+            certs.WritePem(path.Combine($"{commonName}.crt"));
             cert.WriteKey(path.Combine($"{commonName}.key"));
+            ca?.WritePem(path.Combine("ca.crt"));
+            return;
+        }
+
+        if (path.Parent.IsDirectory && !path.HasExtension)
+        {
+            cert.WritePfx(path.WithExtension("pfx"), password);
+            certs.WritePem(path.WithExtension("crt"));
+            cert.WriteKey(path.WithExtension("key"));
+            ca?.WritePem(path.Parent.Combine("ca.crt"));
             return;
         }
 
@@ -59,6 +69,7 @@ public class CertificateCommands
                 cert.WritePfx(path, password);
                 return;
             case "pem":
+            case "crt":
                 certs.WritePem(path);
                 cert.WriteKey(path.WithExtension("key"));
                 return;
@@ -173,7 +184,7 @@ public class CertificateCommands
     {
         using var cert = ReadCertFile(file);
 
-            
+        
         var builder = new StringBuilder()
                 .AppendLine($"Friendly name: {cert.FriendlyName}")
                 .AppendLine($"Thumbprint: {cert.Thumbprint}")
@@ -193,6 +204,18 @@ public class CertificateCommands
             foreach (var extension in cert.Extensions.Where(e => e.Oid != null))
             {
                 builder.AppendLine($"{extension.Oid?.Value} ({extension.Oid?.FriendlyName})");
+                switch (extension)
+                {
+                    case X509EnhancedKeyUsageExtension e:
+                    {
+                        foreach (var usage in e.EnhancedKeyUsages)
+                        {
+                            builder.AppendLine($"- {usage.Value}: {usage.FriendlyName}");
+                        }
+
+                        break;
+                    }
+                }
             }
         }
             

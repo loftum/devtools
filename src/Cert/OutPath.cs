@@ -7,7 +7,7 @@ public readonly struct OutPath
     public string Extension => Path.GetExtension(Raw)?.Trim('.').ToLowerInvariant();
     public bool IsDirectory => Directory.Exists(Raw);
 
-    public string ParentDirectory => Path.GetDirectoryName(Raw);
+    public OutPath Parent => Path.GetDirectoryName(Raw);
     public string Name => Path.GetFileName(Raw);
     public string NameWithoutExtension => Path.GetFileNameWithoutExtension(Raw);
 
@@ -26,7 +26,7 @@ public readonly struct OutPath
 
     public OutPath WithExtension(string extension)
     {
-        return new OutPath(Path.Combine(ParentDirectory, $"{Path.GetFileNameWithoutExtension(Raw)}.{extension.Trim('.')}"));
+        return new OutPath(Path.Combine(Parent, $"{Path.GetFileNameWithoutExtension(Raw)}.{extension.Trim('.')}"));
     }
 
     public OutPath Combine(string part)

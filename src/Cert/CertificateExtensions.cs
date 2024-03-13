@@ -18,7 +18,7 @@ internal static class CertificateExtensions
     
     public static void WritePem(this IEnumerable<X509Certificate2> certs, string path)
     {
-        File.WriteAllText(path, string.Join('\n', certs.Select(c => PemEncoding.Write("CERTIFICATE", c.RawData))));
+        File.WriteAllText(path, string.Join('\n', certs.Select(c => new string(PemEncoding.Write("CERTIFICATE", c.RawData)))));
     }
 
     public static void WriteKey(this X509Certificate2 cert, string path)

@@ -11,7 +11,7 @@ public class OutPathTest
         OutPath path = "/some/path/to/file.txt";
         
         Assert.Equal("/some/path/to/file.txt", path.Raw);
-        Assert.Equal("/some/path/to", path.ParentDirectory);
+        Assert.Equal("/some/path/to", path.Parent);
         Assert.Equal("file.txt", path.Name);
         Assert.Equal("file", path.NameWithoutExtension);
     }

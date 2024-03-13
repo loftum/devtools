@@ -1,6 +1,9 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
+using System.Reflection.Metadata.Ecma335;
 using Http.Logging;
 
 namespace Http;
@@ -45,23 +48,45 @@ public class HttpCommands
         if (certFile != null)
         {
             handler.ClientCertificates.Add(WebRequester.GetCert(certFile, certPass));
+            handler.CheckCertificateRevocationList = false;
+            handler.ServerCertificateCustomValidationCallback = (message, certificate2, arg3, arg4) => true;
         }
         var client = new HttpClient(handler);
-        
-        
 
-        using var response = client.Send(request);
-        Logger.Important($"StatusCode: {response.StatusCode}");
-        if (response.Headers.Any())
+
+        try
         {
-            Logger.Debug("Headers:");
-            foreach (var (key, value) in response.Headers)
+            using var response = client.Send(request);
+            Logger.Important($"StatusCode: {response.StatusCode}");
+            if (response.Headers.Any())
             {
-                Logger.Debug($"{key}:{value}");
+                Logger.Debug("Headers:");
+                foreach (var (key, value) in response.Headers)
+                {
+                    Logger.Debug($"{key}:{value}");
+                }
             }
-        }
         
-        Logger.Normal("Content:");
-        Logger.Normal(response.Content.GetFormattedContent());
+            Logger.Normal("Content:");
+            Logger.Normal(response.Content.GetFormattedContent());
+        }
+        catch (Exception ex)
+        {
+            var b = ex.GetBaseException();
+            switch (b)
+            {
+                case SocketException s:
+                {
+                    Console.WriteLine($"SocketException: {s.Message}");
+                    Console.WriteLine($"Error code: {s.ErrorCode}");
+                    Console.WriteLine($"Socket error {(int)s.SocketErrorCode}: {s.SocketErrorCode}");
+                    Console.WriteLine(s.StackTrace);
+                    break;
+                }
+            }
+
+            throw;
+            
+        }
     }
 }

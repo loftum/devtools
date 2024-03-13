@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
@@ -13,23 +12,6 @@ public static class WebRequester
     {
         var request = new HttpRequestMessage(new HttpMethod(method), url);
         return request;
-    }
-
-    public static HttpWebResponse SafeGetResponse(this HttpWebRequest request)
-    {
-        try
-        {
-            return (HttpWebResponse) request.GetResponse();
-        }
-        catch (WebException e)
-        {
-            if (e.Response != null)
-            {
-                return (HttpWebResponse) e.Response;
-            }
-
-            throw;
-        }
     }
 
     public static X509Certificate2 GetCert(string certFile, string certPass)

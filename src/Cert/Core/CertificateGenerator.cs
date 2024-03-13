@@ -114,7 +114,7 @@ public class CertificateGenerator
 
         var oid = input.Type == CertType.Client ? "1.3.6.1.5.5.7.3.2" : "1.3.6.1.5.5.7.3.1";
 
-        request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection { new Oid(oid) }, false));
+        request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection { new(oid) }, true));
 
         request.CertificateExtensions.Add(sanBuilder.Build());
             
