@@ -34,4 +34,16 @@ public class IpRangeTest
         
         Output.WriteLine($"SeriviceCidr: {serviceRange} ({serviceRange.Size}) firstIp: {serviceRange.FirstIp()} lastIp: {serviceRange.LastIp()}");
     }
+
+    [Fact]
+    public void Print2()
+    {
+        var range = IpRange.Parse("10.0.0.0/1");
+        PrettyPrint(range);
+    }
+
+    private void PrettyPrint(IpRange range)
+    {
+        Output.WriteLine($"nodes: {range} ({range.Size})");
+    }
 }
