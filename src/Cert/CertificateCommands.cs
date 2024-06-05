@@ -166,10 +166,17 @@ public class CertificateCommands
                 var cert = new X509Certificate2(bytes);
                 return cert;
             }
+            case "crt":
             case "pem":
             {
-                var cert = X509Certificate2.CreateFromPemFile(path, path.WithExtension("key"));
-                return cert;
+                var key = path.WithExtension("key");
+                if (key.FileExists())
+                {
+                    return X509Certificate2.CreateFromPemFile(path, path.WithExtension("key"));
+                }
+
+                var content = File.ReadAllText(path);
+                return X509Certificate2.CreateFromPem(content);
             }
             default:
             {

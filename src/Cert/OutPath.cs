@@ -33,4 +33,9 @@ public readonly struct OutPath
     {
         return Path.Combine(Raw, part);
     }
+
+    public bool FileExists()
+    {
+        return File.Exists(Raw);
+    }
 }
