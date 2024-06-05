@@ -238,6 +238,7 @@ class IpRangeElement extends HTMLElement {
         
         const button = document.createElement("button");
         button.style.cursor = "pointer";
+        button.innerHTML = "/";
         button.addEventListener("click", this.click.bind(this));
         titleBar.append(button);
         
