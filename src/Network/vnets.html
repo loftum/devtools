@@ -2,8 +2,7 @@
 <head>
     <title>Vnet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script defer src="alpine.min.js"></script>
-    <script defer src="ip-range.js"></script>
+    <script src="ip-range.js"></script>
     <style>
         :root {
             font-family: "Arial",serif;
@@ -12,36 +11,48 @@
         }
         html,
         body {
-            margin: 5px;
-            padding: 5px;
             box-sizing: border-box;
-            top:0;
-            right:0;
-            bottom:0;
-            left:0;
+            margin: 0;
         }
         
         html {
             background: pink;
         }
-        
+        v-net,
         ip-range {
             border-radius: 5px;
-            padding: 3px;
-            border: 1px solid gray;
+            padding: 0;
+            border: 1px solid #eeeeee;
             background: white;
+            color: #eeeeee;
+            
+        }
+        
+        v-net.registered {
+            border: 1px solid black;
+            color: black;
+        }
+        v-net.hovered {
+            background: lightblue;
         }
         
     </style>
 </head>
-<body style="display: flex; flex-direction: column; align-items: stretch; align-content: stretch; justify-content: space-evenly;">
-    
-    <ip-range cidr="0.0.0.0/0" name="all">
+<body style="overflow: visible;">
+<div style="overflow:visible;">
+    <v-net id="net" cidr="10.0.0.0/7" name="all">
         
-    </ip-range>
+    </v-net>
+</div>
 </body>
 <script>
+    
 (function() {
+    
+    const model = new VNet(undefined, IpRange.parse("10.0.0.0/8"));
+    
+    
+    document.getElementById("net").vnet = model;
     
     const body = document.getElementsByTagName("body")[0];
     zoomer(body);
