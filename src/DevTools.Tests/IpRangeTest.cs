@@ -38,8 +38,11 @@ public class IpRangeTest
     [Fact]
     public void Print2()
     {
-        var range = IpRange.Parse("10.0.0.0/1");
+        var range = IpRange.Parse("0.0.0.0/0");
+        var (sub1, sub2) = range.Split2();
         PrettyPrint(range);
+        PrettyPrint(sub1);
+        PrettyPrint(sub2);
     }
 
     private void PrettyPrint(IpRange range)

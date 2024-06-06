@@ -12,7 +12,7 @@ public readonly struct IpRange
     /// <summary>
     /// number of IPs in this range
     /// </summary>
-    public uint Size => _max - _min + 1;
+    public ulong Size => (ulong) (_max - _min) + 1;
 
     private IpRange(uint address, byte cidrBits)
     {
@@ -78,7 +78,7 @@ public readonly struct IpRange
             throw new InvalidOperationException($"Cidr is already at {_cidrBits}. Can't divide into {number} more. ({cidr})");
         }
         
-        var chunk = Size / number;
+        var chunk = (uint)(Size / number);
         var subRanges = new IpRange[number];
         for (var ii = 0; ii < number; ii++)
         {

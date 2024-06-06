@@ -1,3 +1,5 @@
+const uintMax = 4294967295
+
 class IpRange {
     
     constructor(address, cidrBits) {
@@ -6,10 +8,14 @@ class IpRange {
         
         let mask = 0;
         for (let ii=0; ii<cidrBits; ii++) {
-            mask |= 1 << (31-ii);
+            mask |= (1 << (31-ii));
         }
-        this._min = address & mask;
-        this._max = this._min | (mask ^ 4294967295); // uint.Max
+        this._min = address;
+        this._max = this._min | (mask ^ uintMax); // uint.Max
+        if (this._max < 0) {
+            // bit overflow. Happens for 0.0.0.0/0
+            this._max = uintMax - this._max - 1;
+        }
     }
     
     /**
@@ -95,10 +101,10 @@ class IpRange {
             return undefined;
             //throw `Invalid CIDR '${value}'. Expected more numbers at ${cidrIndex}`;
         }
-        const address = ((octets[0] << 24) & 0xff000000) |
-            ((octets[1] << 16) & 0x00ff0000) |
-            ((octets[2] << 8) & 0x0000ff00) |
-            ((octets[3] << 0) & 0x000000ff);
+        const address = (octets[0] << 24) |
+            (octets[1] << 16)|
+            (octets[2] << 8) |
+            (octets[3] << 0);
         return new IpRange(address, builder.length > 0 ? parseInt(builder) : 255);
     }
     
@@ -110,12 +116,14 @@ class IpRange {
         if (number % 2 !== 0) {
             throw `Cannot split into ${number}. Must be positive and dividable by 2`;
         }
+
         const cidrBits = this._cidrBits + Math.log2(number);
 
         if (cidrBits > 32) {
             return undefined;
         }
-
+        
+        debugger;
         const chunk = this.size / number;
         let subRanges = [];
         for (let ii=0; ii< number; ii++) {
@@ -127,10 +135,10 @@ class IpRange {
     format() {
         const address = this.address;
         const octets = [
-            (address & 0xff000000) >> 24,
-            (address & 0x00ff0000) >> 16,
-            (address & 0x0000ff00) >> 8,
-            (address & 0x000000ff) >> 0
+            (address >> 24) & 0xff,
+            (address >> 16) & 0xff,
+            (address >> 8) & 0xff,
+            (address & 0xff)
         ];
         
         const ip = octets.join('.');
@@ -277,8 +285,8 @@ class IpRangeElement extends HTMLElement {
         container.style.alignItems = "stretch";
         container.style.alignContent = "stretch";
         container.style.flexWrap = "nowrap";
-        container.style.height = "100%";
-        container.style.width = "100%";
+        container.style.minHeight = "100%";
+        container.style.minWidth = "100%";
         const direction = this.direction;
         switch(direction) {
             case "horizontal":
@@ -306,7 +314,6 @@ class IpRangeElement extends HTMLElement {
     }
     
     attributeChangedCallback(name, oldValue, newValue) {
-        console.log(`cidr changed from '${oldValue}' to '${newValue}'`);
         switch(name) {
             case "cidr":
                 this.cidr = newValue;
