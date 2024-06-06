@@ -539,18 +539,19 @@ class VNetElement extends HTMLElement {
         const direction = this.direction;
         switch(direction) {
             case "horizontal":
-                // this.style.minHeight = "100%";
-                // this.style.minwidth = "100%";
+                 this.style.height = "100%";
                 break;
             case "vertical":
-                // this.style.width = "100%";
+                this.style.width = "100%";
                 break;
         }
+        // this.style.flexGrow = "1";
         
         const container = document.createElement("div");
         container.style.display = "flex";
         container.style.alignItems = "stretch";
         container.style.alignContent = "stretch";
+        container.style.justifyContent = "center";
         container.style.flexWrap = "nowrap";
         container.style.flexDirection = direction === "horizontal" ? "row" : "column";
         container.style.height = "100%";
@@ -581,6 +582,16 @@ class VNetElement extends HTMLElement {
             this.classList.remove("registered");
         }
         
+         if (!this.parent){
+            const dimension = this.dimension;
+            this.style.position = "absolute";
+            this.style.display = "block";
+            this.style.height = `${dimension.height}px`;
+            this.style.width = `${dimension.width}px`;    
+        }
+        
+        
+        
         this._title.innerHTML = this.vnet.info();
         
         if (this.vnet.left) {
@@ -601,6 +612,28 @@ class VNetElement extends HTMLElement {
                 this._container.appendChild(right);
                 this._right = right;
             }
+        }
+    }
+    
+    get dimension() {
+        const log2 = Math.log2(this.vnet.range.size);
+        if (log2 % 2 === 0){
+            return Math.sqrt(this.vnet.range.size);
+        }
+        const short = Math.sqrt(this.vnet.range.size / 2);
+        const long = short * 2;
+        
+        switch(this.direction) {
+            case "horizontal":
+                return {
+                    height: short,
+                    width: long
+                };
+            default:
+                return {
+                    height: long,
+                    width: short
+                };
         }
     }
 
