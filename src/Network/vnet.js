@@ -353,15 +353,20 @@ class VNetElement extends HTMLElement {
         this.appendChild(titleBar);
 
         const title = document.createElement("div");
-        title.innerHTML = this._vnet?.info();
+        title.innerHTML = this.vnet?.name ?? "";
         titleBar.appendChild(title);
         this._title = title;
-        titleBar.addEventListener("dblclick", this.click.bind(this));
+        
+        const range = document.createElement("span");
+        range.innerHTML = this.vnet?.range?.info();
+        titleBar.appendChild(range);
+        
+        titleBar.addEventListener("dblclick", this.startEditName.bind(this));
 
         const button = document.createElement("button");
         button.style.cursor = "pointer";
         button.innerHTML = "/";
-        button.addEventListener("click", this.click.bind(this));
+        button.addEventListener("click", this.clicked.bind(this));
         titleBar.append(button);
 
         const direction = this.direction;
@@ -440,8 +445,33 @@ class VNetElement extends HTMLElement {
             }
         }
     }
+    
+    startEditName() {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = this.vnet?.name ?? "";
+        input.addEventListener("keyup", this.endEditName.bind(this));
+        this._title.innerHTML = "";
+        this._title.appendChild(input);
+    }
 
-    click() {
+    /**
+     * 
+     * @param e {KeyboardEvent}
+     */
+    endEditName(e) {
+        switch(e.key){
+            case "Enter":
+            case "Return":
+                const value = e.target.value;
+                this.vnet.name = value;
+                e.target.removeEventListener("keyup", this.endEditName.bind(this));
+                this.render();
+                break;
+        }
+    }
+
+    clicked() {
         const container = this._container;
         if (this._left || this._right) {
             this._left = undefined;
