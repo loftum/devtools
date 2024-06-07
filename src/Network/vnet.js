@@ -182,179 +182,6 @@ class IpRange {
     }
 }
 
-class IpRangeElement extends HTMLElement {
-    
-    static observedAttributes = ["cidr"];
-    
-    constructor() {
-        super();
-        this.cidr = "";
-        
-        this.addEventListener("mouseover", () => this.style.backgroundColor = "lightblue");
-        this.addEventListener("mouseout", () => this.style.backgroundColor = "");
-    }
-    
-    set cidr(value) {
-        this.range = IpRange.parse(value);
-    }
-
-    /**
-     * @returns {string}
-     */
-    get cidr(){
-        return this.range?.info() ?? "unknown";
-    }
-
-    /**
-     * @returns {IpRange|undefined}
-     */
-    get range() {
-        return this._range;
-    }
-    
-    set range(range) {
-        this._range = range;
-    }
-    
-    get parent() {
-        return this._parent;
-    }
-    
-    set parent(parent) {
-        this._parent = parent;
-    }
-
-    /**
-     * @returns {string}
-     */
-    get direction() {
-        const parent = this.parent;
-        if (!parent){
-            return "horizontal";
-        }
-        const parentValue = parent.direction; 
-        switch(parentValue) {
-            case "vertical":
-                return "horizontal";
-            case "horizontal":
-                return "vertical";
-            default:
-                return "horizontal";
-        }
-    }
-    
-    click() {
-        const container = this._container;
-        if (container) {
-            this.removeChild(container);
-            this._container = undefined;
-            return;
-        }
-        else {
-            this.split();
-        }
-    }
-    
-    connectedCallback() {
-        this.style.display = "flex";
-        this.style.alignItems = "stretch";
-        this.style.alignContent = "stretch";
-        this.style.flexWrap = "nowrap";
-        this.style.flexDirection = "column";
-        this.style.margin = this.style.margin || "3px";
-        this.style.boxSizing = "border-box";
-        
-        const titleBar = document.createElement("div");
-        titleBar.style.display = "flex";
-        titleBar.style.flexDirection = "row";
-        titleBar.style.justifyContent = "space-between";
-                
-        this.appendChild(titleBar);
-        
-        const title = document.createElement("div");
-        title.innerHTML = this.range?.info();
-        titleBar.appendChild(title);
-        titleBar.addEventListener("dblclick", this.click.bind(this));
-        
-        const button = document.createElement("button");
-        button.style.cursor = "pointer";
-        button.innerHTML = "/";
-        button.addEventListener("click", this.click.bind(this));
-        titleBar.append(button);
-        
-        const direction = this.direction;
-        switch(direction) {
-            case "horizontal":
-                this.style.height = "100%";
-                break;
-            case "vertical":
-                this.style.width = "100%";
-        }
-    }
-
-    split() {
-        
-        if (this._container) {
-            return;
-        }
-
-        const range = this._range;
-        if (!range) {
-            return;
-        }
-        const parts = range.split();
-
-        if (!parts) {
-            console.log("Could not split");
-            return;
-        }
-        const [range1, range2] = parts;
-        
-
-        const container = document.createElement("div");
-        this.appendChild(container);
-        container.style.display = "flex";
-        container.style.alignItems = "stretch";
-        container.style.alignContent = "stretch";
-        container.style.flexWrap = "nowrap";
-        container.style.height = "100%";
-        container.style.width = "100%";
-        const direction = this.direction;
-        switch(direction) {
-            case "horizontal":
-                container.style.flexDirection = "row";
-                break;
-            case "vertical":
-                container.style.flexDirection = "column";
-        }
-
-        const sub1 = new IpRangeElement();
-        sub1.parent = this;
-        sub1.range = range1;
-        container.appendChild(sub1);
-        
-        const sub2 = new IpRangeElement();
-        sub2.parent = this;
-        
-        sub2.range = range2;
-        container.appendChild(sub2);
-        this._container = container;
-    }
-    
-    disconnectedCallback() {
-        
-    }
-    
-    attributeChangedCallback(name, oldValue, newValue) {
-        switch(name) {
-            case "cidr":
-                this.cidr = newValue;
-        }
-    }
-}
-
-customElements.define('ip-range', IpRangeElement);
-
 class VNet {
     /**
      * 
@@ -363,7 +190,6 @@ class VNet {
     constructor(name, range) {
         this.name = name;
         this.range = range;
-        this._children = [];
     }
 
     /**
@@ -384,14 +210,6 @@ class VNet {
 
     /**
      * 
-     * @returns {[VNet]}
-     */
-    get children(){
-        return this._children;
-    }
-
-    /**
-     * 
      * @param name {string}
      * @param cidr {string}
      */
@@ -406,19 +224,29 @@ class VNet {
             return;
         }
         
+        const subs = this.split();
+        subs.left.add(name, cidr);
+        subs.right.add(name, cidr);
+    }
+    
+    split() {
         const subs = this.range.split();
         if (!subs) {
             return;
         }
-        
+
         if (!this._left) {
             this._left = new VNet(undefined, subs[0]);
         }
-        this._left.add(name, cidr);
+        
         if (!this._right) {
             this._right = new VNet(undefined, subs[1]);
         }
-        this._right.add(name, cidr);
+        
+        return {
+            left: this._left,
+            right: this._right
+        };
     }
 
     /**
@@ -587,10 +415,8 @@ class VNetElement extends HTMLElement {
             this.style.position = "absolute";
             this.style.display = "block";
             this.style.height = `${dimension.height}px`;
-            this.style.width = `${dimension.width}px`;    
+            this.style.width = `${dimension.width}px`;
         }
-        
-        
         
         this._title.innerHTML = this.vnet.info();
         
@@ -613,6 +439,34 @@ class VNetElement extends HTMLElement {
                 this._right = right;
             }
         }
+    }
+
+    click() {
+        const container = this._container;
+        if (this._left || this._right) {
+            this._left = undefined;
+            this._right = undefined;
+            container.innerHTML = "";
+            return;
+        }
+        this.split();
+    }
+    
+    split() {
+        if (this._left || this._right) {
+            return;
+        }
+        
+        const subs = this.vnet.split();
+        this._left = new VNetElement();
+        this._left.parent = this;
+        this._left.vnet = subs.left;
+        this._container.appendChild(this._left);
+
+        this._right = new VNetElement();
+        this._right.parent = this;
+        this._right.vnet = subs.right;
+        this._container.appendChild(this._right);
     }
     
     get dimension() {
