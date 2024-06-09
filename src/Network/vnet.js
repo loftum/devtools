@@ -184,7 +184,7 @@ class IpRange {
 
 class VNet {
     /**
-     * 
+     * @param name {string}
      * @param range {IpRange}
      */
     constructor(name, range) {
@@ -272,7 +272,10 @@ class VNet {
     set range(value) {
         this._range = value;
     }
-    
+
+    /**
+     * @returns {string}
+     */
     info() {
         if (!this.name) {
             return this.range.info();
