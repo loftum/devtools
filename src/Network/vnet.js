@@ -320,13 +320,16 @@ class VNetElement extends HTMLElement {
     }
     
     set name(value) {
-        if (value) {
-            this.model.add(value, this.range.format());
+        
+        if (!value || value.match(/^ *$/) !== null) {
+            this.model.remove(this._name, this.range);
+            this._name = undefined;
+            
         }
         else {
-            this.model.remove(this._name, this.range.format());
+            this.model.add(value, this.range.format());
+            this._name = value;
         }
-        this._name = value;
     }
     
     /**
@@ -434,8 +437,8 @@ class VNetElement extends HTMLElement {
             const dimension = this.dimension;
             this.style.position = "absolute";
             this.style.display = "block";
-            this.style.height = `${dimension.height}px`;
-            this.style.width = `${dimension.width}px`;
+            this.style.minHeight = `${dimension.height}px`;
+            this.style.minWidth = `${dimension.width}px`;
         }
         
         if (this.model.hasSubnetsOf(this.range)) {

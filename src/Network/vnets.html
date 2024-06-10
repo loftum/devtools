@@ -13,11 +13,12 @@
         body {
             box-sizing: border-box;
             margin: 0;
+            width: 8192px;
+            height: 8192px;
         }
         
         html {
             background: #eeeeee;
-            
         }
         v-net,
         ip-range {
@@ -46,9 +47,11 @@
             min-width: 100px;
             bottom: 0;
             left: 0;
+            border: 1px solid gray;
+            border-radius: 5px;
         }
         v-net-table > td {
-            border:0;
+            border: 0;
         }
         tr.highlighted {
             background: pink;
