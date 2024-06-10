@@ -661,7 +661,10 @@ class VNetTableElement extends HTMLElement {
         const cidrInput = tr.getElementsByTagName("input")[1];
         const addButton = tr.getElementsByTagName("button")[0];
         addButton.addEventListener("click", () => {
-            this.model.add(nameInput.value, cidrInput.value);
+            if (this.model.add(nameInput.value, cidrInput.value)) {
+                nameInput.value = null;
+                cidrInput.value = null;
+            }
         });
         this._tr = tr;
         
@@ -827,11 +830,12 @@ class VNetModel {
     add(name, cidr) {
         const entry = VNetEntry.parse(name, cidr);
         if (!entry){
-            return;
+            return false;
         }
         
         this._entries.push(entry);
         this.fire("add", entry);
+        return true;
     }
     
     remove(name, range) {
