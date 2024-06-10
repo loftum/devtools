@@ -13,15 +13,14 @@
         body {
             box-sizing: border-box;
             margin: 0;
-            width: 8192px;
-            height: 8192px;
+            min-width: 8192px;
+            min-height: 8192px;
         }
         
         html {
             background: #eeeeee;
         }
-        v-net,
-        ip-range {
+        v-net {
             border-radius: 5px;
             padding: 0;
             border: 1px solid #eeeeee;
@@ -33,6 +32,10 @@
         v-net.registered {
             border: 1px solid black;
             color: black;
+        }
+        v-net.conflict {
+            border: 3px solid red;
+            background: #ff2222;
         }
         v-net.hovered {
             background: lightblue;

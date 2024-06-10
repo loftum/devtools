@@ -194,14 +194,30 @@ class VNetElement extends HTMLElement {
         super();
         this._left = undefined;
         this._right = undefined;
-        this.addEventListener("mouseover", () => this.classList.add("hovered"));
-        this.addEventListener("mouseout", () => this.classList.remove("hovered"));
+        this.addEventListener("mouseover", this.hover.bind(this));
+        this.addEventListener("mouseout", this.unhover.bind(this));
+    }
+    
+    hover(e) {
+        this.classList.add("hovered");
+        if (!this.name) {
+            return;
+        }
+        
+    }
+    
+    unhover(e) {
+        this.classList.remove("hovered");
+        if (!this.name) {
+            return;
+        }
     }
     
     highlight(e) {
-        if (this.range.equals(e.range)){
+        if (this.range.equals(e.range)) {
             this.classList.add("highlighted");
         }
+        this.model.highlight()
     }
     
     unhighlight(e) {
@@ -423,7 +439,22 @@ class VNetElement extends HTMLElement {
             return;
         }
 
-        this._name = this.model.getName(this.range);
+        const names = this.model.getNames(this.range);
+        switch(names.length){
+            case 0:
+                this._name = undefined;
+                this.classList.remove("registered", "conflict");
+                break;
+            case 1:
+                this.classList.add("registered");
+                this._name = names[0];
+                break;
+            case 2:
+                this.classList.add("registered", "conflict");
+                this._name = names.join(", ");
+                break;
+        }
+        
         this._title.innerHTML = this._name || "";
         
         if (this._name) {
@@ -439,6 +470,8 @@ class VNetElement extends HTMLElement {
             this.style.display = "block";
             this.style.minHeight = `${dimension.height}px`;
             this.style.minWidth = `${dimension.width}px`;
+            this.style.top = `${dimension.height / 2}px`;
+            this.style.left = `${dimension.width / 2}px`;
         }
         
         if (this.model.hasSubnetsOf(this.range)) {
@@ -825,17 +858,9 @@ class VNetModel {
         this.fire("remove", entry);
     }
     
-    getName(range) {
-        const entries = this._entries.filter(e => e.range.equals(range));
-        switch(entries.length){
-            case 0:
-                return undefined;
-            case 1:
-                return entries[0].name;
-            default:
-                return entries.map(e => e.name).join(", ");
-                
-        }
+    getNames(range) {
+        const entries = this._entries.filter(e => e.range.equals(range)).map(e => e.name);
+        return entries;
     }
     
     fire(eventName, value) {
