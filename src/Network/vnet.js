@@ -188,8 +188,13 @@ class VNet {
      * @param range {IpRange}
      */
     constructor(name, range) {
-        this.name = name;
-        this.range = range;
+        this._eventListeners = [];
+        this._name = name;
+        this._range = range;
+    }
+    
+    addEventListener(listener) {
+        this._eventListeners.push(listener);
     }
 
     /**
@@ -258,7 +263,15 @@ class VNet {
     }
     
     set name(value) {
+        const oldValue = this._name;
         this._name = value;
+        this.notify("namechange", oldValue, value);
+    }
+    
+    notify(eventName, oldValue, newValue) {
+        for (let ii=0; ii<this._eventListeners.length; ii++) {
+            this._eventListeners[ii].on(eventName, oldValue, newValue);
+        }
     }
 
     /**
@@ -333,7 +346,17 @@ class VNetElement extends HTMLElement {
     
     set vnet(value) {
         this._vnet = value;
+        value.addEventListener(this);
         this.render();
+    }
+    
+    on(eventName, oldValue, newValue) {
+        switch(eventName){
+            case "namechange":
+                if (newValue) {
+                    
+                }
+        }
     }
     
     connectedCallback() {
@@ -426,7 +449,7 @@ class VNetElement extends HTMLElement {
             this.style.width = `${dimension.width}px`;
         }
         
-        this._title.innerHTML = this.vnet.info();
+        this._title.innerHTML = this.vnet.name || "";
         
         if (this.vnet.left) {
             if (!this._left) {
@@ -468,6 +491,10 @@ class VNetElement extends HTMLElement {
             case "Return":
                 const value = e.target.value;
                 this.vnet.name = value;
+                e.target.removeEventListener("keyup", this.endEditName.bind(this));
+                this.render();
+                break;
+            case "Escape":
                 e.target.removeEventListener("keyup", this.endEditName.bind(this));
                 this.render();
                 break;

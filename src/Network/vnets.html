@@ -13,10 +13,13 @@
         body {
             box-sizing: border-box;
             margin: 0;
+            height: 4096px;
+            width: 8192px;
         }
         
         html {
-            background: pink;
+            background: #eeeeee;
+            
         }
         v-net,
         ip-range {
@@ -85,7 +88,8 @@
     
     document.getElementById("net").vnet = model;
     
-    const body = document.getElementsByTagName("body")[0];
+    //const body = document.getElementsByTagName("body")[0];
+    const body = document.getElementsByTagName("html")[0];
     zoomer(body);
     
     function zoomer(body) {
@@ -108,11 +112,11 @@
                     break;
                 case "+":
                     e.preventDefault();
-                    zoomIn();
+                    zoom(speed);
                     break;
                 case "-":
                     e.preventDefault();
-                    zoomOut();
+                    zoom(-speed);
                     break;
             }
 
@@ -127,43 +131,39 @@
             }
         });
 
-        let zoom = 1;
-        const speed = .015;
+        let currentZoom = 1;
+        
 
         document.addEventListener("wheel", function(e) {
             if (!metaPressed){
                 return;
             }
             if (e.deltaY < 0) {
-                e.preventDefault();
-                zoomIn();
+                // e.preventDefault();
+                zoom(-e.deltaY / 314);
             }
             else {
-                e.preventDefault();
-                zoomOut();
+                // e.preventDefault();
+                
+                zoom(-e.deltaY / 314);
             }
         });
         
         function resetZoom() {
             body.style.transform = "";
         }
+
+        const speed = .015;
         
-        function zoomIn() {
-            if (zoom >= 2){
+        function zoom(delta) {
+            if (delta > 0 && currentZoom >= 2 || delta < 0 && currentZoom <= .1) {
                 return;
             }
-            zoom += speed;
-            body.style.transform = `scale(${zoom})`;
+            
+            currentZoom += delta;
+            
+            body.style.transform = `scale(${currentZoom})`;
         }
-        
-        function zoomOut() {
-            if (zoom <= .1){
-                return;
-            }
-            zoom -= speed;
-            body.style.transform = `scale(${zoom})`;
-        }
-        
     }
 })();
 </script>
