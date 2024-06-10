@@ -163,6 +163,10 @@ class IpRange {
         }
         return subRanges;
     }
+
+    get value() {
+        return this.format();
+    }
     
     format() {
         const address = this.address;
@@ -179,121 +183,6 @@ class IpRange {
     
     info() {
         return `${this.format()} (${this.size})`
-    }
-}
-
-class VNet {
-    /**
-     * @param name {string}
-     * @param range {IpRange}
-     */
-    constructor(name, range) {
-        this._eventListeners = [];
-        this._name = name;
-        this._range = range;
-    }
-    
-    addEventListener(listener) {
-        this._eventListeners.push(listener);
-    }
-
-    /**
-     * 
-     * @returns {VNet}
-     */
-    get left() {
-        return this._left;
-    }
-
-    /**
-     * 
-     * @returns {VNet}
-     */
-    get right() {
-        return this._right;
-    }
-
-    /**
-     * 
-     * @param name {string}
-     * @param cidr {string}
-     */
-    add(name, cidr) {
-        const range = IpRange.parse(cidr);
-        if (!this.range.contains(range)) {
-            return;
-        }
-        
-        if (this.range.equals(range)) {
-            this.name = name;
-            return;
-        }
-        
-        const subs = this.split();
-        subs.left.add(name, cidr);
-        subs.right.add(name, cidr);
-    }
-    
-    split() {
-        const subs = this.range.split();
-        if (!subs) {
-            return;
-        }
-
-        if (!this._left) {
-            this._left = new VNet(undefined, subs[0]);
-        }
-        
-        if (!this._right) {
-            this._right = new VNet(undefined, subs[1]);
-        }
-        
-        return {
-            left: this._left,
-            right: this._right
-        };
-    }
-
-    /**
-     * 
-     * @returns {string}
-     */
-    get name() {
-        return this._name;
-    }
-    
-    set name(value) {
-        const oldValue = this._name;
-        this._name = value;
-        this.notify("namechange", oldValue, value);
-    }
-    
-    notify(eventName, oldValue, newValue) {
-        for (let ii=0; ii<this._eventListeners.length; ii++) {
-            this._eventListeners[ii].on(eventName, oldValue, newValue);
-        }
-    }
-
-    /**
-     * 
-     * @returns {IpRange}
-     */
-    get range(){
-        return this._range;
-    }
-    
-    set range(value) {
-        this._range = value;
-    }
-
-    /**
-     * @returns {string}
-     */
-    info() {
-        if (!this.name) {
-            return this.range.info();
-        }
-        return `${this.name} ${this.range.info()}`;
     }
 }
 
@@ -337,26 +226,110 @@ class VNetElement extends HTMLElement {
     }
 
     /**
-     * 
-     * @returns {VNet|*}
+     * @returns {VNetElement | undefined}
      */
-    get vnet() {
-        return this._vnet;
+    get left(){
+        return this.left;
+    }
+    set left(value) {
+        value.parent = this;
+        value.model = this.model;
+        value.range = this.range.split()[1];
+        this._left = value;
+        this.appendChild(value);
+    }
+
+    /**
+     * @returns {VNetElement | undefined}
+     */
+    get right(){
+        return this._right;
     }
     
-    set vnet(value) {
-        this._vnet = value;
-        value.addEventListener(this);
-        this.render();
+    set right(value) {
+        value.parent = this;
+        value.model = this.model;
+        value.range = this.range.split()[0];
+        this._right = value;
+        this.appendChild(value);
     }
-    
-    on(eventName, oldValue, newValue) {
-        switch(eventName){
-            case "namechange":
-                if (newValue) {
-                    
-                }
+
+    split() {
+        if (this._left || this._right) {
+            return;
         }
+
+        const subs = this.range.split();
+        this._left = new VNetElement();
+        this._left.parent = this;
+        this._left.range = subs[0];
+        this._left.model = this.model;
+        this._container.appendChild(this._left);
+        
+        
+        this._right = new VNetElement();
+        this._right.parent = this;
+        this._right.range = subs[1];
+        this._right.model = this.model;
+        this._container.appendChild(this._right);
+        
+    }
+    
+    removeChildren() {
+        if (this._left) {
+            this._left.remove();
+            this._left = undefined;
+        }
+        if (this._right) {
+            this._right.remove();
+            this._right = undefined;
+        }
+        
+        this._container.innerHTML = "";
+    }
+
+    /**
+     * 
+     * @returns {IpRange}
+     */
+    get range(){
+        return this._range;
+    }
+    
+    set range(value) {
+        this._range = value;
+    }
+
+    /**
+     * 
+     * @returns {string | undefined}
+     */
+    get name() {
+        return this._name;
+    }
+    
+    set name(value) {
+        if (value) {
+            this.model.add(value, this.range.format());
+        }
+        else {
+            this.model.remove(this._name, this.range.format());
+        }
+        this._name = value;
+    }
+    
+    /**
+     * @returns {VNetModel}
+     */
+    get model() {
+        return this._model;
+    }
+    
+    set model(value) {
+        this._model = value;
+        value.addEventListener("add", this.render.bind(this));
+        value.addEventListener("remove", this.render.bind(this));
+        this.render();
     }
     
     connectedCallback() {
@@ -384,7 +357,7 @@ class VNetElement extends HTMLElement {
         this._title = title;
         
         const range = document.createElement("span");
-        range.innerHTML = this.vnet?.range?.info();
+        range.innerHTML = this.range?.info();
         titleBar.appendChild(range);
         
         titleBar.addEventListener("dblclick", this.startEditName.bind(this));
@@ -425,23 +398,26 @@ class VNetElement extends HTMLElement {
     _initiated = false;
     
     render() {
-        if (!this._initiated){
+        if (!this._initiated) {
             return ;
         }
         
-        if (!this.vnet) {
+        if (!this.model) {
             this._title.innerHTML = "";
             return;
         }
-       
-        if (this.vnet.name) {
+
+        this._name = this.model.getName(this.range);
+        this._title.innerHTML = this._name || "";
+        
+        if (this._name) {
             this.classList.add("registered");
         }
         else {
             this.classList.remove("registered");
         }
         
-         if (!this.parent){
+        if (!this.parent) {
             const dimension = this.dimension;
             this.style.position = "absolute";
             this.style.display = "block";
@@ -449,33 +425,18 @@ class VNetElement extends HTMLElement {
             this.style.width = `${dimension.width}px`;
         }
         
-        this._title.innerHTML = this.vnet.name || "";
-        
-        if (this.vnet.left) {
-            if (!this._left) {
-                const left = new VNetElement();
-                left.parent = this;
-                left.vnet = this.vnet.left;
-                this._container.appendChild(left);
-                this._left = left;
-            }
+        if (this.model.hasSubnetsOf(this.range)) {
+            this.split();
         }
-        
-        if (this.vnet.right) {
-            if (!this._right) {
-                const right = new VNetElement();
-                right.parent = this;
-                right.vnet = this.vnet.right;
-                this._container.appendChild(right);
-                this._right = right;
-            }
+        else {
+            this.removeChildren();
         }
     }
     
     startEditName() {
         const input = document.createElement("input");
         input.type = "text";
-        input.value = this.vnet?.name ?? "";
+        input.value = this.name ?? "";
         input.addEventListener("keyup", this.endEditName.bind(this));
         this._title.innerHTML = "";
         this._title.appendChild(input);
@@ -490,7 +451,7 @@ class VNetElement extends HTMLElement {
             case "Enter":
             case "Return":
                 const value = e.target.value;
-                this.vnet.name = value;
+                this.name = value;
                 e.target.removeEventListener("keyup", this.endEditName.bind(this));
                 this.render();
                 break;
@@ -502,39 +463,35 @@ class VNetElement extends HTMLElement {
     }
 
     clicked() {
-        const container = this._container;
         if (this._left || this._right) {
-            this._left = undefined;
-            this._right = undefined;
-            container.innerHTML = "";
+            this.removeChildren();
             return;
         }
         this.split();
     }
     
-    split() {
-        if (this._left || this._right) {
-            return;
+    remove() {
+        if (this.name) {
+            this.model.remove(this.name, this.range.format());
         }
-        
-        const subs = this.vnet.split();
-        this._left = new VNetElement();
-        this._left.parent = this;
-        this._left.vnet = subs.left;
-        this._container.appendChild(this._left);
-
-        this._right = new VNetElement();
-        this._right.parent = this;
-        this._right.vnet = subs.right;
-        this._container.appendChild(this._right);
+        if (this._left){
+            this._left.remove();
+        }
+        if (this._right) {
+            this._right.remove();
+        }
     }
     
     get dimension() {
-        const log2 = Math.log2(this.vnet.range.size);
-        if (log2 % 2 === 0){
-            return Math.sqrt(this.vnet.range.size);
+        const log2 = Math.log2(this.range.size);
+        if (log2 % 2 === 0) {
+            const side = Math.sqrt(this.range.size);
+            return {
+                height: side,
+                width: side
+            };
         }
-        const short = Math.sqrt(this.vnet.range.size / 2);
+        const short = Math.sqrt(this.range.size / 2);
         const long = short * 2;
         
         switch(this.direction) {
@@ -552,7 +509,10 @@ class VNetElement extends HTMLElement {
     }
 
     disconnectedCallback() {
-
+        if (this.model) {
+            this.model.removeEventListener("add", this.render.bind(this));
+            this.model.removeEventListener("remove", this.render.bind(this));
+        }
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -562,10 +522,210 @@ class VNetElement extends HTMLElement {
                 if (!range){
                     return;
                 }
-                this.vnet = new VNet(undefined, range);
+                this.range = range;
                 break;
         }
     }
 }
 
 customElements.define('v-net', VNetElement);
+
+class VNetTableElement extends HTMLElement {
+    
+    constructor() {
+        super();
+    }
+
+    /**
+     * @returns {VNetModel}
+     */
+    get model() {
+        return this._model;
+    }
+    
+    set model(value) {
+        
+        this._model = value;
+        value.addEventListener("add", this.render.bind(this));
+        value.addEventListener("remove", this.render.bind(this));
+        this.render();
+    }
+
+    connectedCallback() {
+        this.style.backgroundColor = "red";
+        
+        this.innerHTML = `
+        <table>
+        <thead>
+        <tr>
+            <th>name</th>
+            <th>cidr</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+        </table>
+        `;
+        this._tbody = this.getElementsByTagName("tbody")[0];
+        this._initiated = true;
+        this.render();
+    }
+    
+    _initiated = false;
+    
+    render() {
+        
+        if (!this._initiated || !this.model) {
+            return;
+        }
+        
+        this._tbody.innerHTML = "";
+        for (let ii=0; ii<this.model.entries.length; ii++) {
+            const entry = this.model.entries[ii];
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${entry.name}</td><td>${entry.cidr}</td><td><button>D</button></td>`;
+            const deleteButton = tr.getElementsByTagName("button")[0];
+            deleteButton.addEventListener("click", () => {
+                this.model.removeEntry(entry);
+            });
+            this._tbody.appendChild(tr);
+        }
+        const tr = document.createElement("tr");
+        
+        tr.innerHTML = `<td><input type="text" placeholder="name"></td><td><input type="text" placeholder="10.10.0.0/16"></td><td><button>+</button></td>`;
+        const nameInput = tr.getElementsByTagName("input")[0];
+        const cidrInput = tr.getElementsByTagName("input")[1];
+        const addButton = tr.getElementsByTagName("button")[0];
+        addButton.addEventListener("click", () => {
+           this.model.add(nameInput.value, cidrInput.value); 
+        });
+        this._tbody.appendChild(tr);
+    }
+}
+
+customElements.define('v-net-table', VNetTableElement);
+
+class VNetModel {
+    
+    constructor(entries) {
+        this._entries = entries || [];
+        const listeners = new Map();
+        listeners.set("add", []);
+        listeners.set("remove", []);
+        this._eventListeners = listeners;
+        
+    }
+    
+    get entries() {
+        return this._entries;
+    }
+
+    /**
+     * @param range {IpRange}
+     */
+    hasSubnetsOf(range) {
+        
+        for (let ii=0; ii<this._entries.length; ii++) {
+            const element = this._entries[ii];
+            const elementRange = IpRange.parse(element.cidr);
+            if (elementRange && range.contains(elementRange) && !range.equals(elementRange)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * @param name {string}
+     * @param cidr {string}
+     */
+    add(name, cidr) {
+        if (!name || !cidr) {
+            return;
+        }
+        const range = IpRange.parse(cidr);
+        
+        if (!range) {
+            return;
+        }
+        
+        const entry = { name:name, cidr:cidr };
+        this._entries.push(entry);
+        this.save();
+        this.fire("add", entry);
+    }
+    
+    remove(name, cidr) {
+        let ii = 0;
+        while (ii < this._entries.length) {
+            const entry = this._entries[ii];
+            if (entry.name === name && entry.cidr === cidr) {
+                this._entries.splice(ii, 1);
+                this.save();
+                this.fire("remove", entry);
+            }
+            else {
+                ii++;
+            }
+        }
+    }
+    
+    removeEntry(entry) {
+        const index = this._entries.indexOf(entry);
+        if (index < 0) {
+            return;
+        }
+        this._entries.splice(index, 1);
+        this.save();
+        this.fire("remove", entry);
+    }
+    
+    getName(cidr) {
+        if (cidr instanceof IpRange) {
+            cidr = cidr.format();
+        }
+        const entries = this._entries.filter(e => e.cidr === cidr);
+        
+        if (entries.length === 1) {
+            return entries[0].name;
+        }
+        return undefined;
+    }
+    
+    fire(eventName, value) {
+        const listeners = this._eventListeners.get(eventName);
+        for(let ii=0; ii<listeners.length; ii++) {
+            listeners[ii](value);
+        }
+    }
+    
+    addEventListener(eventName, callback) {
+        if (!this._eventListeners.has(eventName)){
+            return;
+        }
+        this._eventListeners.get(eventName).push(callback);
+    }
+    
+    removeEventListener(eventName, callback) {
+        if (!this._eventListeners.has(eventName)){
+            return;
+        }
+        const listeners = this._eventListeners.get(eventName);
+        const index = listeners.indexOf(callback);
+        if (index < 0){
+            return;
+        }
+        listeners.splice(index, 1);
+    }
+    
+    save() {
+        window.localStorage.setItem("vnet-table", JSON.stringify(this._entries));
+    }
+    
+    static load() {
+        const json = window.localStorage.getItem("vnet-table") || "[]";
+        return new VNetModel(JSON.parse(json));
+    }
+}

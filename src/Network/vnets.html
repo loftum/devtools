@@ -13,8 +13,6 @@
         body {
             box-sizing: border-box;
             margin: 0;
-            height: 4096px;
-            width: 8192px;
         }
         
         html {
@@ -42,54 +40,26 @@
     </style>
 </head>
 <body style="overflow: visible;">
+    <div id="zoomer">
+        <v-net id="net" cidr="10.0.0.0/8" name="all">
+            
+        </v-net>
+    </div>
+    <v-net-table style="position: fixed; min-height: 100px; min-width: 100px; bottom: 0; left: 0;">
 
-    <v-net id="net" cidr="10.0.0.0/7" name="all">
-        
-    </v-net>
-
+    </v-net-table>
 </body>
 <script>
     
 (function() {
     
-    const model = new VNet(undefined, IpRange.parse("10.0.0.0/8"));
-    model.add("pølse", "10.1.0.0/16");
-    model.add("lompe", "10.0.0.0/16");
-    model.add("ketchup", "10.175.10.0/24");
-    model.add("sennep", "10.175.10.0/24");
-    model.add("ambolt", "10.144.68.0/22");
-    model.add("agurk", "10.144.64.0/22");
-    model.add("maursluker", "10.133.0.0/20");
-    model.add("villsvin", "10.240.0.0/21");
-    model.add("brekkjern", "10.128.0.0/21");
-    model.add("tomat", "10.170.38.0/24");
-    model.add("pølsebil", "10.170.16.0/22");
-    model.add("radiator", "10.170.44.0/24");
-    model.add("psykologi", "10.170.42.0/24");
-    model.add("terningkast", "10.170.36.0/23");
-    model.add("andre ting", "10.170.40.0/24");
-    model.add("vet ikke", "10.170.45.0/24");
-    model.add("up for grabs", "10.244.16.0/20");
-    model.add("svømmeføtter", "10.128.32.0/20");
-    model.add("høyttaler", "10.128.16.0/20");
-    model.add("radio", "10.128.64.0/18");
-    model.add("tv", "10.244.80.0/22");
-    model.add("fiskeboller", "10.140.0.0/22");
-    model.add("gullfisk", "10.240.8.0/21");
-    model.add("ladekabel", "10.128.8.0/21");
-    model.add("pinnsvin", "10.244.0.0/20");
-    model.add("grantre", "10.128.48.0/20");
-    model.add("furunål", "10.244.32.0/23");
-    model.add("artisjokk", "10.244.34.0/23");
-    model.add("karbonade", "10.142.100.0/23");
-    model.add("tannkremtube", "10.143.102.0/23");
-    model.add("garasjeport", "10.143.100.0/23");
-    model.add("alfa romeo", "10.0.0.0/16");
+    const model = VNetModel.load();
     
-    document.getElementById("net").vnet = model;
+    document.getElementById("net").model = model;
+    document.getElementsByTagName("v-net-table")[0].model = model;
     
-    //const body = document.getElementsByTagName("body")[0];
-    const body = document.getElementsByTagName("html")[0];
+    // const body = document.getElementsByTagName("body")[0];
+    const body = document.getElementById("zoomer");
     zoomer(body);
     
     function zoomer(body) {
@@ -139,12 +109,9 @@
                 return;
             }
             if (e.deltaY < 0) {
-                // e.preventDefault();
                 zoom(-e.deltaY / 314);
             }
             else {
-                // e.preventDefault();
-                
                 zoom(-e.deltaY / 314);
             }
         });
