@@ -203,7 +203,6 @@ class VNetElement extends HTMLElement {
         if (!this.name) {
             return;
         }
-        
     }
     
     unhover(e) {
@@ -217,7 +216,6 @@ class VNetElement extends HTMLElement {
         if (this.range.equals(e.range)) {
             this.classList.add("highlighted");
         }
-        this.model.highlight()
     }
     
     unhighlight(e) {
@@ -691,11 +689,11 @@ class VNetTableElement extends HTMLElement {
             });
             tr.addEventListener("mouseenter", () => {
                 tr.classList.add("highlighted");
-                this.model.highlight(entry);
+                this.model.highlightEntry(entry);
             });
             tr.addEventListener("mouseleave", () => {
                 tr.classList.remove("highlighted");
-                this.model.unhighlight(entry);
+                this.model.unhighlightEntry(entry);
             });
             this._tbody.appendChild(tr);
         }
@@ -815,11 +813,11 @@ class VNetModel {
         this.fire("remove", this._entries);
     }
     
-    highlight(entry) {
+    highlightEntry(entry) {
         this.fire("highlight", entry);
     }
     
-    unhighlight(entry) {
+    unhighlightEntry(entry) {
         this.fire("unhighlight", entry);
     }
     
