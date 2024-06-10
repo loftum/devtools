@@ -36,6 +36,23 @@
         v-net.hovered {
             background: lightblue;
         }
+        v-net.highlighted {
+            background: pink;
+        }
+        v-net-table {
+            background: #ffffcc;
+            position: fixed;
+            min-height: 100px;
+            min-width: 100px;
+            bottom: 0;
+            left: 0;
+        }
+        v-net-table > td {
+            border:0;
+        }
+        tr.highlighted {
+            background: pink;
+        }
         
     </style>
 </head>
@@ -45,7 +62,7 @@
             
         </v-net>
     </div>
-    <v-net-table style="position: fixed; min-height: 100px; min-width: 100px; bottom: 0; left: 0;">
+    <v-net-table>
 
     </v-net-table>
 </body>
@@ -68,7 +85,6 @@
         let metaPressed = false;
 
         document.addEventListener("keydown", function(e) {
-            console.log(e.key);
             metaPressed = isMac ? e.metaKey : e.ctrlKey;
 
             if (!metaPressed) {
@@ -87,6 +103,10 @@
                 case "-":
                     e.preventDefault();
                     zoom(-speed);
+                    break;
+                case "s":
+                    e.preventDefault();
+                    model.save();
                     break;
             }
 
