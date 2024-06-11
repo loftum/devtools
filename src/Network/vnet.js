@@ -623,10 +623,11 @@ class VNetTableElement extends HTMLElement {
             const line = lines[ii];
             const parts = line.split(",");
             
-            if (parts.length < 3) {
+            if (parts.length < 2) {
+                console.log(`Invalid line: ${line}`);
                 continue;
             }
-            const cidrs = parts[2].split(",").map(c => c.trim());
+            const cidrs = parts[1].split(";").map(c => c.trim());
             const entry = VNetEntry.parse(parts[0], cidrs);
             
             if (entry) {
@@ -635,6 +636,7 @@ class VNetTableElement extends HTMLElement {
         }
         
         if (entries.length === 0) {
+            console.log("Nothing to paste");
             return;
         }
         this.model.entries = entries;
