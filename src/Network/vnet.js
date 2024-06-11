@@ -17,22 +17,6 @@ class IpRange {
             this._max = uintMax - this._max - 1;
         }
     }
-    
-    find(cidr) {
-        const range = IpRange.parse(cidr);
-        if (!range) {
-            return undefined;
-        }
-        if (!this.contains(range)) {
-            return undefined;
-        }
-        if (this.equals(range)) {
-            return this;
-        }
-        
-        const subs = this.splitInto(2);
-        
-    }
 
     /**
      * 
@@ -162,6 +146,23 @@ class IpRange {
             subRanges.push(new IpRange(this.min + ii * chunk, cidrBits));
         }
         return subRanges;
+    }
+
+    get parent() {
+        if (this._cidrBits > 0) {
+           const cidrBits = this._cidrBits-1;
+           
+           let min = this.min;
+           for (let ii=31-cidrBits; ii>=0; ii--){
+               min &= ~1<<ii;
+           }
+           
+           return new IpRange(min, cidrBits);
+        }
+        if (this.min > 0) {
+            return new IpRange(this.min / 2, this._cidrBits);
+        }
+        return undefined;
     }
 
     get value() {
@@ -317,8 +318,10 @@ class VNetElement extends HTMLElement {
             this._right.remove();
             this._right = undefined;
         }
-        
-        this._container.innerHTML = "";
+    
+        if (this._container){
+            this._container.innerHTML = "";    
+        }
     }
 
     /**
@@ -361,12 +364,27 @@ class VNetElement extends HTMLElement {
     }
     
     set model(value) {
+        this.unregister(this.model);
         this._model = value;
         value.addEventListener("add", this.render.bind(this));
         value.addEventListener("remove", this.render.bind(this));
         value.addEventListener("highlight", this.highlight.bind(this));
         value.addEventListener("unhighlight", this.unhighlight.bind(this));
+        this.classList.remove("highlighted");
         this.render();
+    }
+
+    /**
+     * 
+     * @param model {VNetModel}
+     */
+    unregister(model) {
+        if (model) {
+            model.removeEventListener("add", this.render.bind(this));
+            model.removeEventListener("remove", this.render.bind(this));
+            model.removeEventListener("highglight", this.highlight.bind(this));
+            model.removeEventListener("unhighglight", this.unhighlight.bind(this));
+        }    
     }
     
     connectedCallback() {
@@ -444,6 +462,23 @@ class VNetElement extends HTMLElement {
             return;
         }
 
+        this.removeChildren();
+        if (!this.parent) {
+            const range = this.model.getParentRange();
+            if (!this.range.equals(range)) {
+                this.removeChildren();
+                this.range = range;
+            }
+            const dimension = this.dimension;
+            this.style.position = "absolute";
+            this.style.display = "block";
+            this.style.minHeight = `${dimension.height}px`;
+            this.style.minWidth = `${dimension.width}px`;
+            this.style.top = `${dimension.height / 2}px`;
+            this.style.left = `${dimension.width / 2}px`;
+        }
+        
+
         const entries = this.model.getEntries(this.range);
         this._entries = entries;
         switch(entries.length) {
@@ -468,16 +503,6 @@ class VNetElement extends HTMLElement {
         }
         else {
             this.classList.remove("registered");
-        }
-        
-        if (!this.parent) {
-            const dimension = this.dimension;    
-            this.style.position = "absolute";
-            this.style.display = "block";
-            this.style.minHeight = `${dimension.height}px`;
-            this.style.minWidth = `${dimension.width}px`;
-            this.style.top = `${dimension.height / 2}px`;
-            this.style.left = `${dimension.width / 2}px`;
         }
         
         if (this.model.hasSubnetsOf(this.range)) {
@@ -519,22 +544,21 @@ class VNetElement extends HTMLElement {
 
     clicked() {
         if (this._left || this._right) {
-            this.removeChildren();
+            this.removeChildren(true);
             return;
         }
         this.split();
     }
-    
-    remove() {
-        if (this.name) {
+
+    /**
+     * 
+     * @param removeFromModel {Boolean}
+     */
+    remove(removeFromModel) {
+        if (this.name && removeFromModel === true) {
             this.model.remove(this.name, this.range.format());
         }
-        if (this._left){
-            this._left.remove();
-        }
-        if (this._right) {
-            this._right.remove();
-        }
+        this.removeChildren();
         super.remove();
     }
     
@@ -565,13 +589,7 @@ class VNetElement extends HTMLElement {
     }
 
     disconnectedCallback() {
-        const model = this.model;
-        if (model) {
-            model.removeEventListener("add", this.render.bind(this));
-            model.removeEventListener("remove", this.render.bind(this));
-            model.removeEventListener("highglight", this.highlight.bind(this));
-            model.removeEventListener("unhighglight", this.unhighlight.bind(this));
-        }
+        this.unregister(this.model);
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -852,6 +870,26 @@ class VNetModel {
         this.fire("add", value);
     }
 
+    getParentRange() {
+        const ranges = this._entries.flatMap(e => e.ranges);
+        if (ranges.length === 0) {
+            // ¯\_(ツ)_/¯
+            return IpRange.parse("10.0.0.0/16");
+        }
+        /** 
+         * @type {IpRange | undefined}
+         */
+        let parent = ranges[0].parent;
+        
+        let happy = p => ranges.every(r => p.contains(r));
+        
+        while(!happy(parent)) {
+            parent = parent.parent;
+        }
+        
+        return parent;
+    }
+
     /**
      * @param range {IpRange}
      */
@@ -860,8 +898,12 @@ class VNetModel {
         for (let ii=0; ii<this._entries.length; ii++) {
             const element = this._entries[ii];
             
-            for(let jj=0; jj<element.ranges.length; jj++){
+            for (let jj=0; jj<element.ranges.length; jj++){
                 const elementRange = element.ranges[jj];
+                if (!range.contains){
+                    debugger;
+                    console.log("OMG NOT CONTAINS");
+                }
                 if (range.contains(elementRange) && !range.equals(elementRange)) {
                     return true;
                 }    
@@ -906,9 +948,18 @@ class VNetModel {
         let ii = 0;
         while (ii < this._entries.length) {
             const entry = this._entries[ii];
-            if (entry.name === name && entry.ranges.equals(range)) {
+            
+            let jj = 0;
+            while(jj< entry.ranges.length) {
+                const entryRange = entry.ranges[jj];
+                if (range.equals(entryRange)){
+                    entry.ranges.splice(jj, 1);
+                }
+                jj++;
+            }
+            
+            if (entry.ranges.length === 0) {
                 this._entries.splice(ii, 1);
-                this.save();
                 this.fire("remove", entry);
             }
             else {
