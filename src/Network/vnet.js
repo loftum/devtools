@@ -308,14 +308,17 @@ class VNetElement extends HTMLElement {
         this._container.appendChild(this._right);
         
     }
-    
-    removeChildren() {
+
+    /**
+     * @param removeFromModel {Boolean}
+     */
+    removeChildren(removeFromModel) {
         if (this._left) {
-            this._left.remove();
+            this._left.remove(removeFromModel);
             this._left = undefined;
         }
         if (this._right) {
-            this._right.remove();
+            this._right.remove(removeFromModel);
             this._right = undefined;
         }
     
@@ -551,14 +554,13 @@ class VNetElement extends HTMLElement {
     }
 
     /**
-     * 
      * @param removeFromModel {Boolean}
      */
     remove(removeFromModel) {
         if (this.name && removeFromModel === true) {
-            this.model.remove(this.name, this.range.format());
+            this.model.remove(this.name, this.range);
         }
-        this.removeChildren();
+        this.removeChildren(removeFromModel);
         super.remove();
     }
     
