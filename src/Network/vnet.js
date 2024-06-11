@@ -200,15 +200,19 @@ class VNetElement extends HTMLElement {
     
     hover(e) {
         this.classList.add("hovered");
-        if (!this.name) {
-            return;
+        if (this._entries && this._entries.length > 0) {
+            for (let ii=0; ii<this._entries.length; ii++) {
+                this.model.highlightEntry(this._entries[ii]);
+            }
         }
     }
     
     unhover(e) {
         this.classList.remove("hovered");
-        if (!this.name) {
-            return;
+        if (this._entries && this._entries.length > 0) {
+            for (let ii=0; ii<this._entries.length; ii++) {
+                this.model.unhighlightEntry(this._entries[ii]);
+            }
         }
     }
     
@@ -334,11 +338,10 @@ class VNetElement extends HTMLElement {
     }
     
     set name(value) {
-        
         if (!value || value.match(/^ *$/) !== null) {
             this.model.remove(this._name, this.range);
+            this.classList.remove("highlighted");
             this._name = undefined;
-            
         }
         else {
             this.model.add(value, this.range.format());
@@ -437,19 +440,20 @@ class VNetElement extends HTMLElement {
             return;
         }
 
-        const names = this.model.getNames(this.range);
-        switch(names.length){
+        const entries = this.model.getEntries(this.range);
+        this._entries = entries;
+        switch(entries.length) {
             case 0:
                 this._name = undefined;
                 this.classList.remove("registered", "conflict");
                 break;
             case 1:
                 this.classList.add("registered");
-                this._name = names[0];
+                this._name = entries[0].name;
                 break;
-            case 2:
+            default:
                 this.classList.add("registered", "conflict");
-                this._name = names.join(", ");
+                this._name = entries.map(e => e.name).join(", ");
                 break;
         }
         
@@ -463,7 +467,7 @@ class VNetElement extends HTMLElement {
         }
         
         if (!this.parent) {
-            const dimension = this.dimension;
+            const dimension = this.dimension;    
             this.style.position = "absolute";
             this.style.display = "block";
             this.style.minHeight = `${dimension.height}px`;
@@ -527,6 +531,7 @@ class VNetElement extends HTMLElement {
         if (this._right) {
             this._right.remove();
         }
+        super.remove();
     }
     
     get dimension() {
@@ -556,9 +561,12 @@ class VNetElement extends HTMLElement {
     }
 
     disconnectedCallback() {
-        if (this.model) {
-            this.model.removeEventListener("add", this.render.bind(this));
-            this.model.removeEventListener("remove", this.render.bind(this));
+        const model = this.model;
+        if (model) {
+            model.removeEventListener("add", this.render.bind(this));
+            model.removeEventListener("remove", this.render.bind(this));
+            model.removeEventListener("highglight", this.highlight.bind(this));
+            model.removeEventListener("unhighglight", this.unhighlight.bind(this));
         }
     }
 
@@ -582,11 +590,10 @@ class VNetTableElement extends HTMLElement {
     constructor() {
         super();
         this.addEventListener("paste", this.paste.bind(this));
+        this._entryMap = new Map();
     }
     
     paste(e) {
-        console.log("PASTE!");
-        
         const text = e.clipboardData.getData("text/plain");
         const lines = text.split("\n");
         const entries = [];
@@ -623,11 +630,23 @@ class VNetTableElement extends HTMLElement {
         this._model = value;
         value.addEventListener("add", this.render.bind(this));
         value.addEventListener("remove", this.render.bind(this));
+        value.addEventListener("highlight", this.highlight.bind(this));
+        value.addEventListener("unhighlight", this.unhighlight.bind(this));
         this.render();
     }
     
     highlight(e) {
-        
+        const tr = this._entryMap.get(e);
+        if (tr){
+            tr.classList.add("highlighted");
+        }
+    }
+    
+    unhighlight(e) {
+        const tr = this._entryMap.get(e);
+        if (tr){
+            tr.classList.remove("highlighted");
+        }
     }
 
     connectedCallback() {
@@ -670,6 +689,16 @@ class VNetTableElement extends HTMLElement {
         this.render();
     }
     
+    disconnectedCallback() {
+        const model = this.model;
+        if (model) {
+            model.removeEventListener("add", this.render.bind(this));
+            model.removeEventListener("remove", this.render.bind(this));
+            model.removeEventListener("highlight", this.highlight.bind(this));
+            model.removeEventListener("unhighlight", this.unhighlight.bind(this));    
+        }
+    }
+    
     _initiated = false;
     
     render() {
@@ -679,6 +708,8 @@ class VNetTableElement extends HTMLElement {
         }
         
         this._tbody.innerHTML = "";
+        this._entryMap.clear();
+        
         for (let ii=0; ii<this.model.entries.length; ii++) {
             const entry = this.model.entries[ii];
             const tr = document.createElement("tr");
@@ -695,6 +726,8 @@ class VNetTableElement extends HTMLElement {
                 tr.classList.remove("highlighted");
                 this.model.unhighlightEntry(entry);
             });
+            this._entryMap.set(entry, tr);
+            
             this._tbody.appendChild(tr);
         }
         
@@ -735,6 +768,12 @@ class VNetEntry {
         this._range = value;
     }
 
+    /**
+     * 
+     * @param name
+     * @param cidr
+     * @returns {VNetEntry|undefined}
+     */
     static parse(name, cidr) {
         if (!name) {
             return undefined;
@@ -859,21 +898,37 @@ class VNetModel {
         this._entries.splice(index, 1);
         this.fire("remove", entry);
     }
-    
-    getNames(range) {
-        const entries = this._entries.filter(e => e.range.equals(range)).map(e => e.name);
-        return entries;
+
+    /**
+     * 
+     * @param range
+     * @returns {VNetEntry[]}
+     */
+    getEntries(range) {
+        return this._entries.filter(e => e.range.equals(range));
     }
     
     fire(eventName, value) {
         const listeners = this._eventListeners.get(eventName);
-        for(let ii=0; ii<listeners.length; ii++) {
-            listeners[ii](value);
+        if (!listeners){
+            return;
+        }
+        for (let ii=0; ii<listeners.length; ii++) {
+            const listener = listeners[ii];
+            if (!listener) {
+                console.log(`${listener} is not a function`);
+                continue;
+            }
+            listener(value);
         }
     }
     
     addEventListener(eventName, callback) {
         if (!this._eventListeners.has(eventName)){
+            return;
+        }
+        if (!callback){
+            console.log("OMG NOT CALLBACK LOL!");
             return;
         }
         this._eventListeners.get(eventName).push(callback);
@@ -885,7 +940,7 @@ class VNetModel {
         }
         const listeners = this._eventListeners.get(eventName);
         const index = listeners.indexOf(callback);
-        if (index < 0){
+        if (index < 0) {
             return;
         }
         listeners.splice(index, 1);

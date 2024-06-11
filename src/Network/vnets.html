@@ -62,8 +62,8 @@
         
     </style>
 </head>
-<body style="overflow: visible;">
-    <div id="zoomer">
+<body>
+    <div id="zoomer" style="width: 100%; height: 100%; box-sizing: border-box">
         <v-net id="net" cidr="10.0.0.0/8" name="all">
             
         </v-net>
@@ -81,8 +81,8 @@
     document.getElementById("net").model = model;
     document.getElementsByTagName("v-net-table")[0].model = model;
     
-    //const body = document.getElementsByTagName("v-net")[0];
-    const body = document.getElementById("zoomer");
+    const body = document.getElementsByTagName("v-net")[0];
+    //const body = document.getElementById("zoomer");
     zoomer(body);
     
     function zoomer(body) {
