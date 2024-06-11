@@ -215,15 +215,19 @@ class VNetElement extends HTMLElement {
             }
         }
     }
-    
+
+    /**
+     * 
+     * @param e {VNetEntry}
+     */
     highlight(e) {
-        if (this.range.equals(e.range)) {
+        if (e.ranges.some(r => r.equals(this.range))){
             this.classList.add("highlighted");
         }
     }
     
     unhighlight(e) {
-        if (this.range.equals(e.range)){
+        if (e.ranges.some(r => r.equals(this.range))){
             this.classList.remove("highlighted");
         }
     }
@@ -604,11 +608,11 @@ class VNetTableElement extends HTMLElement {
             if (parts.length < 3) {
                 continue;
             }
-            
-            const entry = VNetEntry.parse(parts[0], parts[2]);
+            const cidrs = parts[2].split(",").map(c => c.trim());
+            const entry = VNetEntry.parse(parts[0], cidrs);
             
             if (entry) {
-                entries.push({name: name, cidr: parts[2]});    
+                entries.push(entry);    
             }
         }
         
@@ -713,7 +717,7 @@ class VNetTableElement extends HTMLElement {
         for (let ii=0; ii<this.model.entries.length; ii++) {
             const entry = this.model.entries[ii];
             const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${entry.name}</td><td>${entry.range.format()}</td><td>${entry.range.size}</td><td><button>D</button></td>`;
+            tr.innerHTML = `<td>${entry.name}</td><td>${entry.ranges.map(r => r.format()).join(", ")}</td><td>${entry.size}</td><td><button>D</button></td>`;
             const deleteButton = tr.getElementsByTagName("button")[0];
             deleteButton.addEventListener("click", () => {
                 this.model.removeEntry(entry);
@@ -741,12 +745,27 @@ class VNetEntry {
 
     /**
      * @param name {string}
-     * @param range {IpRange}
+     * @param ranges {IpRange[]}
      */
-    constructor(name, range) {
+    constructor(name, ranges) {
         this.name = name;
-        this.range = range;
+        this.ranges = ranges;
+        let sum = 0;
+        
+        for (let ii=0; ii<ranges.length; ii++) {
+            sum += ranges[ii].size;
+        }
+        this._size = sum;
     }
+
+    /**
+     * 
+     * @returns {number}
+     */
+    get size(){
+        return this._size;
+    }
+    
     /**
      * @returns {string}
      */
@@ -758,32 +777,36 @@ class VNetEntry {
     }
 
     /**
-     * @returns {IpRange}
+     * @returns {IpRange[]}
      */
-    get range() {
+    get ranges() {
         return this._range;
     }
     
-    set range(value) {
+    set ranges(value) {
         this._range = value;
     }
 
     /**
      * 
-     * @param name
-     * @param cidr
+     * @param name {string}
+     * @param cidrs {string[]}
      * @returns {VNetEntry|undefined}
      */
-    static parse(name, cidr) {
+    static parse(name, cidrs) {
         if (!name) {
             return undefined;
         }
-        const range = IpRange.parse(cidr);
-        if (!range) {
+        if (!cidrs) {
             return undefined;
         }
         
-        return new VNetEntry(name, range);
+        const ranges = cidrs.map(c => IpRange.parse(c));
+        if (ranges.some(r => !r)){
+            return undefined;
+        }
+        
+        return new VNetEntry(name, ranges);
     }
 }
 
@@ -798,7 +821,7 @@ class VNetModel {
         this._entries = [];
         for(let ii=0; ii<entries.length; ii++) {
             const e = entries[ii];
-            const entry = VNetEntry.parse(e.name, e.cidr);
+            const entry = VNetEntry.parse(e.name, e.cidrs);
             if (!entry){
                 continue;
             }
@@ -837,8 +860,11 @@ class VNetModel {
         for (let ii=0; ii<this._entries.length; ii++) {
             const element = this._entries[ii];
             
-            if (range.contains(element.range) && !range.equals(element.range)) {
-                return true;
+            for(let jj=0; jj<element.ranges.length; jj++){
+                const elementRange = element.ranges[jj];
+                if (range.contains(elementRange) && !range.equals(elementRange)) {
+                    return true;
+                }    
             }
         }
         
@@ -865,7 +891,8 @@ class VNetModel {
      * @param cidr {string}
      */
     add(name, cidr) {
-        const entry = VNetEntry.parse(name, cidr);
+        const cidrs = cidr.split(",").map(c => c.trim());
+        const entry = VNetEntry.parse(name, cidrs);
         if (!entry){
             return false;
         }
@@ -879,7 +906,7 @@ class VNetModel {
         let ii = 0;
         while (ii < this._entries.length) {
             const entry = this._entries[ii];
-            if (entry.name === name && entry.range.equals(range)) {
+            if (entry.name === name && entry.ranges.equals(range)) {
                 this._entries.splice(ii, 1);
                 this.save();
                 this.fire("remove", entry);
@@ -905,7 +932,7 @@ class VNetModel {
      * @returns {VNetEntry[]}
      */
     getEntries(range) {
-        return this._entries.filter(e => e.range.equals(range));
+        return this._entries.filter(e => e.ranges.some(r => r.equals(range)));
     }
     
     fire(eventName, value) {
@@ -950,7 +977,7 @@ class VNetModel {
         const elements = this._entries.map(e => {
             return {
                 name: e.name,
-                cidr: e.range.format()    
+                cidrs: e.ranges.map(r => r.format())    
             }
         });
         window.localStorage.setItem("vnet-table", JSON.stringify(elements));
