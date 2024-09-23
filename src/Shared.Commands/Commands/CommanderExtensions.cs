@@ -2,6 +2,7 @@
 using System.Reflection;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ManualHttp.Commands;
 
@@ -10,7 +11,15 @@ public static class CommandBuilder
     public static Command FromMethod(MethodInfo method)
     {
         var parameters = method.GetParameters().Select(ParameterBuilder.FromParameter);
-        return new Command(method.Name.ToLowerInvariant(), arguments => method.Invoke(null, arguments), parameters);
+        if (method.ReturnType == typeof(Task))
+        {
+            return new Command(method.Name.ToLowerInvariant(), arguments => (Task) method.Invoke(null, arguments), parameters);    
+        }
+        return new Command(method.Name.ToLowerInvariant(), arguments =>
+        {
+            method.Invoke(null, arguments);
+            return Task.CompletedTask;
+        }, parameters);
     }
 }
 

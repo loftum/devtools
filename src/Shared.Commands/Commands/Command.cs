@@ -2,25 +2,26 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ManualHttp.Commands;
 
 public class Command
 {
     public string Name { get; }
-    private readonly Action<object[]> _action;
+    private readonly Func<object[], Task> _action;
     public IList<CommandParameter> Parameters { get; }
 
-    public Command(string name, Action<object[]> action, IEnumerable<CommandParameter> parameters)
+    public Command(string name, Func<object[], Task> action, IEnumerable<CommandParameter> parameters)
     {
         Name = name;
         _action = action;
         Parameters = parameters.ToList();
     }
 
-    public void Execute(IEnumerable<string> args)
+    public Task ExecuteAsync(IEnumerable<string> args)
     {
-        _action(Parse(args));
+        return _action(Parse(args));
     }
 
     private object[] Parse(IEnumerable<string> args)

@@ -11,7 +11,7 @@ class Program
         var commander = new Commander().RegisterStaticMethodsOf<ManualHttpCommands>();
         try
         {
-            commander.Execute(args);
+            commander.ExecuteAsync(args);
             return 0;
         }
         catch (AuthenticationException)

@@ -3,7 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
-using System.Reflection.Metadata.Ecma335;
+using System.Threading.Tasks;
 using Http.Logging;
 
 namespace Http;
@@ -17,14 +17,18 @@ public class HttpCommands
         Settings.Instance.LogLevel = level;
     }
 
-    public static void Get(string url, string host = null, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
+    public static Task Get(string url, string host = null, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
     {
-        Send("GET", url, host, accept, username, password, certFile, certPass);
+        return Send("GET", url, host, accept, username, password, certFile, certPass);
     }
 
-    public static void Send(string method, string url, string host = null, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
+    public static async Task Send(string method, string url, string host = null, string version = null, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
     {
         var request = WebRequester.Create(method, url);
+        if (version != null)
+        {
+            request.Version = new Version(version);
+        }
         if (username != null || password != null)
         {
             request.Headers.Authorization = AuthenticationHeaderValue.Parse(Authorization.Basic(username, password));
@@ -56,7 +60,7 @@ public class HttpCommands
 
         try
         {
-            using var response = client.Send(request);
+            using var response = await client.SendAsync(request);
             Logger.Important($"StatusCode: {response.StatusCode}");
             if (response.Headers.Any())
             {

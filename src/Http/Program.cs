@@ -1,17 +1,17 @@
 ﻿using System;
+using System.Threading.Tasks;
 using ManualHttp.Commands;
 
 namespace Http;
 
 class Program
 {
-    static int Main(string[] args)
+    static async Task<int> Main(string[] args)
     {
         var commander = new Commander().RegisterStaticMethodsOf<HttpCommands>();
         try
         {
-
-            commander.Execute(args);
+            await commander.ExecuteAsync(args);
             return 0;
         }
         catch (Exception ex)

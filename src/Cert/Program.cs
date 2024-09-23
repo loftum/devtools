@@ -9,7 +9,7 @@ internal class Program
         try
         {
             var commander = new Commander().RegisterStaticMethodsOf<CertificateCommands>();
-            commander.Execute(args);
+            await commander.ExecuteAsync(args);
             return 0;
         }
         catch (ArgumentException e)

@@ -5,12 +5,12 @@ namespace Base64;
 
 internal class Program
 {
-    public static int Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         try
         {
             var commander = new Commander().RegisterStaticMethodsOf<Base64Commands>();
-            commander.Execute(args);
+            await commander.ExecuteAsync(args);
             return 0;
         }
         catch (Exception e)
