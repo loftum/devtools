@@ -41,6 +41,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkloadIdentity", "Workloa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlDecode", "UrlDecode\UrlDecode.csproj", "{F1C762BA-D791-45AF-8993-951DDB993402}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssemblyInfo", "AssemblyInfo\AssemblyInfo.csproj", "{A4B77905-AE7B-4DA8-B6D7-650D44637783}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Shared.Commands\Shared.Commands.projitems*{8a1e5941-2af4-4e9d-aa79-22bc842d4b37}*SharedItemsImports = 13
@@ -102,6 +104,10 @@ Global
 		{F1C762BA-D791-45AF-8993-951DDB993402}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1C762BA-D791-45AF-8993-951DDB993402}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1C762BA-D791-45AF-8993-951DDB993402}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4B77905-AE7B-4DA8-B6D7-650D44637783}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4B77905-AE7B-4DA8-B6D7-650D44637783}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4B77905-AE7B-4DA8-B6D7-650D44637783}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4B77905-AE7B-4DA8-B6D7-650D44637783}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -121,6 +127,7 @@ Global
 		{7DF0C841-8B6C-4EF5-BAB3-9C5826A98012} = {C35E2142-C526-4E73-9E12-740A0BF07E13}
 		{CC87443C-125B-4CDF-9C00-0E9972AD9AF1} = {C35E2142-C526-4E73-9E12-740A0BF07E13}
 		{F1C762BA-D791-45AF-8993-951DDB993402} = {C35E2142-C526-4E73-9E12-740A0BF07E13}
+		{A4B77905-AE7B-4DA8-B6D7-650D44637783} = {C35E2142-C526-4E73-9E12-740A0BF07E13}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CBC2F9B8-968C-4D92-BEC8-6E4AA5AE4E0D}
