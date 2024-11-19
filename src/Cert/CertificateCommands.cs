@@ -35,6 +35,39 @@ public class CertificateCommands
         Write(ca, outPath, password);
     }
 
+    public static void Create(CertType type,
+        string commonName,
+        string caPath,
+        string outPath,
+        string password = null,
+        DateTimeOffset? notBefore = null,
+        DateTimeOffset? notAfter = null,
+        string[] dnsNames = null,
+        string countryCode = "NO",
+        string organization = null,
+        string[] organizationalUnits = null)
+    {
+        var caCert = ReadCertFile(caPath);
+
+        var now = DateTimeOffset.UtcNow;
+        var input = new CertInput
+        {
+            Type = type,
+            Organization = organization,
+            CommonName = commonName,
+            NotBefore = notBefore ?? now,
+            NotAfter = notAfter ?? now.AddYears(1),
+            CountryCode = countryCode,
+            DnsNames = dnsNames,
+            OrganizationalUnits = organizationalUnits,
+            Ca = caCert
+        };
+            
+        using var cert = CertificateGenerator.CreateCertificate(input);
+
+        Write(cert, caCert, outPath, password);
+    }
+    
     private static void Write(X509Certificate2 cert, OutPath path, string password)
     {
         Write(cert, null, path, password);
@@ -76,39 +109,6 @@ public class CertificateCommands
             default:
                 throw new InvalidOperationException($"Invalid path {path}");
         }
-    }
-
-    public static void Create(CertType type,
-        string commonName,
-        string caPath,
-        string outPath,
-        string password = null,
-        DateTimeOffset? notBefore = null,
-        DateTimeOffset? notAfter = null,
-        string[] dnsNames = null,
-        string countryCode = "NO",
-        string organization = null,
-        string[] organizationalUnits = null)
-    {
-        var caCert = ReadCertFile(caPath);
-
-        var now = DateTimeOffset.UtcNow;
-        var input = new CertInput
-        {
-            Type = type,
-            Organization = organization,
-            CommonName = commonName,
-            NotBefore = notBefore ?? now,
-            NotAfter = notAfter ?? now.AddYears(1),
-            CountryCode = countryCode,
-            DnsNames = dnsNames,
-            OrganizationalUnits = organizationalUnits,
-            Ca = caCert
-        };
-            
-        using var cert = CertificateGenerator.CreateCertificate(input);
-
-        Write(cert, caCert, outPath, password);
     }
 
     public static void Export(string inputPath, string outputPath)
