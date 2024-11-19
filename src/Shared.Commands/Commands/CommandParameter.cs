@@ -34,22 +34,44 @@ public class CommandParameter
         throw new ArgumentException($"You must specify {Name}");
     }
 
+    private static bool IsNullable(Type type, out Type inner)
+    {
+        if (type.IsGenericType)
+        {
+            var def = type.GetGenericTypeDefinition();
+            if (def == typeof(Nullable<>))
+            {
+                inner = type.GenericTypeArguments[0];
+                return true;
+            }
+        }
+
+        inner = default;
+        return false;
+    }
+    
     private object Parse(Argument argument)
     {
-        switch (Type)
+        var type = IsNullable(Type, out var inner) ? inner : Type;
+        
+        switch (type)
         {
-            case not null when Type == typeof(string):
+            case not null when type == typeof(string):
                 return argument.Value;
-            case not null when Type == typeof(bool):
+            case not null when type == typeof(bool):
                 if (argument.Value == null)
                 {
                     return argument.IsNamed;
                 }
                 return bool.TryParse(argument.Value, out var ret) && ret;
             case { IsEnum: true}:
-                return Enum.Parse(Type, argument.Value, true);
+                return Enum.Parse(type, argument.Value, true);
+            case not null when type == typeof(DateTimeOffset):
+                return DateTimeOffset.Parse(argument.Value);
+            case not null when type == typeof(DateTime):
+                return DateTime.Parse(argument.Value);
             default:
-                return Convert.ChangeType(argument.Value, Type);
+                return Convert.ChangeType(argument.Value, type);
         }
     }
 

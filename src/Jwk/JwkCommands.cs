@@ -15,7 +15,7 @@ public class JwkCommands
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
     
-    public static async Task GenRsa(string outFolder, int keySize = 4096,  string use = "sig")
+    public static async Task GenRsa(string outFolder, string? filenamePrefix = null, int keySize = 4096,  string use = "sig")
     {
         if (File.Exists(outFolder))
         {
@@ -39,12 +39,15 @@ public class JwkCommands
             D = Base64.UrlEncode(parameters.D),
             DP = Base64.UrlEncode(parameters.DP),
             DQ = Base64.UrlEncode(parameters.DQ),
+            QI = Base64.UrlEncode(parameters.InverseQ)
         };
 
         var publicJwk = jwk.Public();
 
-        var publicFileName = Path.Combine(outFolder, $"{jwk.Kid}.jwk.json"); 
-        var privateFileName = Path.Combine(outFolder, $"{jwk.Kid}.private.jwk.json");
+        filenamePrefix ??= jwk.Kid;
+
+        var publicFileName = Path.Combine(outFolder, $"{filenamePrefix}.public.jwk.json"); 
+        var privateFileName = Path.Combine(outFolder, $"{filenamePrefix}.full.jwk.json");
         
         await File.WriteAllTextAsync(publicFileName, JsonSerializer.Serialize(publicJwk, JsonOptions));
         await File.WriteAllTextAsync(privateFileName, JsonSerializer.Serialize(jwk, JsonOptions));
@@ -78,6 +81,7 @@ public record RsaJwk : RsaPublicJwk
     public string? D { get; set; }
     public string? DP { get; set; }
     public string? DQ { get; set; }
+    public string? QI { get; set; }
 
     public RsaPublicJwk Public()
     {

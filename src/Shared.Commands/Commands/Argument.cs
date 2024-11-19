@@ -24,7 +24,7 @@ public class Argument
         {
             if (raw.StartsWith("-"))
             {
-                var index = raw.IndexOf(":", StringComparison.InvariantCultureIgnoreCase);
+                var index = raw.IndexOf("=", StringComparison.InvariantCultureIgnoreCase);
                 Name = index > 0 ? raw.Substring(1, index - 1) : raw.Substring(1);
                 Value = index > 0 ? raw[(index + 1)..] : null;
             }
@@ -37,6 +37,6 @@ public class Argument
 
     public override string ToString()
     {
-        return IsNamed ? $"-{Name}:{Value}" : Value;
+        return IsNamed ? $"-{Name}={Value}" : Value;
     }
 }

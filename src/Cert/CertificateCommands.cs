@@ -156,14 +156,14 @@ public class CertificateCommands
         return stream.ToArray();
     }
 
-    private static X509Certificate2 ReadCertFile(OutPath path)
+    private static X509Certificate2 ReadCertFile(OutPath path, string password = null)
     {
         switch (path.Extension)
         {
             case "pfx":
             {
                 var bytes = File.ReadAllBytes(path);
-                var cert = new X509Certificate2(bytes);
+                var cert = password == null ? new X509Certificate2(bytes) : new X509Certificate2(bytes, password);
                 return cert;
             }
             case "crt":
@@ -187,9 +187,9 @@ public class CertificateCommands
         }
     }
 
-    public static void Read(string file)
+    public static void Read(string file, string password = null)
     {
-        using var cert = ReadCertFile(file);
+        using var cert = ReadCertFile(file, password);
 
         
         var builder = new StringBuilder()
