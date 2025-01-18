@@ -1,21 +1,15 @@
-const uintMax = 4294967295
+const uintMax = 4294967295;
 
 class IpRange {
     
     constructor(address, cidrBits) {
         this.address = address;
         this.cidrBits = cidrBits;
-        
-        let mask = 0;
-        for (let ii=0; ii<cidrBits; ii++) {
-            mask |= (1 << (31-ii));
-        }
+
         this._min = address;
-        this._max = this._min | (mask ^ uintMax); // uint.Max
-        if (this._max < 0) {
-            // bit overflow. Happens for 0.0.0.0/0
-            this._max = uintMax - this._max - 1;
-        }
+        
+        let hostBits = 32 - cidrBits;
+        this._max = address + Math.pow(2, hostBits);
     }
 
     /**
@@ -62,7 +56,7 @@ class IpRange {
     }
     
     get size() {
-        return this.max - this.min + 1;
+        return this.max - this.min;
     }
 
     set cidrBits(value) {
@@ -118,10 +112,10 @@ class IpRange {
             return undefined;
             //throw `Invalid CIDR '${value}'. Expected more numbers at ${cidrIndex}`;
         }
-        const address = (octets[0] << 24) |
-            (octets[1] << 16)|
-            (octets[2] << 8) |
-            (octets[3] << 0);
+        const address = ((octets[0] * (1 << 24)) >>> 0) +
+            ((octets[1] * (1 << 16)) >>> 0) +
+            ((octets[2] * (1 << 8)) >>> 0) +
+            (octets[3] >>> 0);
         return new IpRange(address, builder.length > 0 ? parseInt(builder) : 255);
     }
     
@@ -697,12 +691,12 @@ class VNetTableElement extends HTMLElement {
         <tbody>
         </tbody>
         </table>
-        <button>Copy to clipboard</button>
+        <button id="copy">Copy to clipboard</button>
         `;
         this._tbody = this.getElementsByTagName("tbody")[0];
 
-        const button = this.getElementsByTagName("button")[0];
-        button.addEventListener("click", this.copyToClipboard.bind(this));
+        const copy = this.getElementsByTagName("button")[0];
+        copy.addEventListener("click", this.copyToClipboard.bind(this));
 
         const tr = document.createElement("tr");
 
@@ -905,11 +899,18 @@ class VNetModel {
         /** 
          * @type {IpRange | undefined}
          */
+        
+        
         let parent = ranges[0].parent;
         
-        let happy = p => ranges.every(r => p.contains(r));
+        
+        let happy = p => p && ranges.every(r => p.contains(r));
         
         while(!happy(parent)) {
+
+            if (!parent.parent) {
+                debugger;
+            }
             parent = parent.parent;
         }
         
