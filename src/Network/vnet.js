@@ -617,6 +617,14 @@ class VNetTableElement extends HTMLElement {
         this._entryMap = new Map();
     }
     
+    async copyToClipboard() {
+        if (!this.model.entries){
+            return;
+        }
+        const text = this.model.entries.map(e => e.format()).join("\n");
+        await navigator.clipboard.writeText(text);
+    }
+    
     paste(e) {
         const text = e.clipboardData.getData("text/plain");
         const lines = text.split("\n");
@@ -689,8 +697,12 @@ class VNetTableElement extends HTMLElement {
         <tbody>
         </tbody>
         </table>
+        <button>Copy to clipboard</button>
         `;
         this._tbody = this.getElementsByTagName("tbody")[0];
+
+        const button = this.getElementsByTagName("button")[0];
+        button.addEventListener("click", this.copyToClipboard.bind(this));
 
         const tr = document.createElement("tr");
 
@@ -710,6 +722,8 @@ class VNetTableElement extends HTMLElement {
             }
         });
         this._tr = tr;
+        
+        
         
         this._initiated = true;
         this.render();
@@ -829,6 +843,14 @@ class VNetEntry {
         }
         
         return new VNetEntry(name, ranges);
+    }
+
+    /**
+     * @returns {string}
+     */
+    format() {
+        const ipranges = this.ranges.map(r => r.format()).join(";");
+        return `${this.name},${ipranges}`;
     }
 }
 
