@@ -83,7 +83,6 @@
     document.getElementsByTagName("v-net-table")[0].model = model;
     
     const body = document.getElementsByTagName("v-net")[0];
-    //const body = document.getElementById("zoomer");
     zoomer(body);
     
     function zoomer(body) {
@@ -95,6 +94,7 @@
             metaPressed = isMac ? e.metaKey : e.ctrlKey;
 
             if (!metaPressed) {
+                console.log("meta")
                 return;
             }
 
@@ -129,17 +129,22 @@
         });
 
         let currentZoom = 1;
+        let translateX = 0;
+        let translateY = 0;
+        const factor = 1;
+        const speed = .015;
         
-
+        
         document.addEventListener("wheel", function(e) {
+            
             if (!metaPressed){
                 return;
             }
             if (e.deltaY < 0) {
-                zoom(-e.deltaY / 314);
+                zoom(-e.deltaY / 314, e);
             }
             else {
-                zoom(-e.deltaY / 314);
+                zoom(-e.deltaY / 314, e);
             }
         });
         
@@ -147,16 +152,25 @@
             body.style.transform = "";
         }
 
-        const speed = .015;
         
-        function zoom(delta) {
+        
+        function zoom(delta, e) {
+            
             if (delta > 0 && currentZoom >= 4 || delta < 0 && currentZoom <= 0) {
                 return;
             }
+            const nextZoom = currentZoom + delta * factor;
+            const ratio = 1 - nextZoom / currentZoom;
+
+            // hmm..
+            translateX += (e.clientX - translateX) * ratio * 1.1;
+            translateY += (e.clientY - translateY) * ratio * 1.1;
+                        
+            console.log(`clientX: ${e.clientX} clientY: ${e.clientY} translateX: ${translateX} translateY: ${translateY}`);
             
-            currentZoom += delta;
-            
-            body.style.transform = `scale(${currentZoom})`;
+            body.style.transform = `translate(${translateX}px, ${translateY}px) scale(${nextZoom})`;
+
+            currentZoom = nextZoom;
         }
     }
 })();
