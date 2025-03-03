@@ -53,9 +53,9 @@ class Program
             Console.WriteLine("PANG!");
             switch (ex.SocketErrorCode)
             {
-                case SocketError.TimedOut:
-                    Console.WriteLine($"Timeout ({arg.Timeout})");
-                    break;
+                // case SocketError.TimedOut:
+                //     Console.WriteLine($"Timeout ({arg.Timeout})");
+                //     break;
                 default:
                     Console.WriteLine($"{(int) (ex.SocketErrorCode)} {ex.SocketErrorCode}: {ex.Message}");
                     break;
