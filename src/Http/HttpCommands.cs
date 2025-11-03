@@ -17,9 +17,9 @@ public class HttpCommands
         Settings.Instance.LogLevel = level;
     }
 
-    public static Task Get(string url, string host = null, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
+    public static Task Get(string url, string host = null, string version = null, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)
     {
-        return Send("GET", url, host, accept, username, password, certFile, certPass);
+        return Send("GET", url, host, version, accept, username, password, certFile, certPass);
     }
 
     public static async Task Send(string method, string url, string host = null, string version = null, string accept = null, string username = null, string password = null, string certFile = null, string certPass = null)

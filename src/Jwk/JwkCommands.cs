@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Jwk.Encodings;
@@ -51,6 +52,75 @@ public class JwkCommands
         
         await File.WriteAllTextAsync(publicFileName, JsonSerializer.Serialize(publicJwk, JsonOptions));
         await File.WriteAllTextAsync(privateFileName, JsonSerializer.Serialize(jwk, JsonOptions));
+    }
+
+    public static async Task FromSsh(string file)
+    {
+        if (!File.Exists(file))
+        {
+            throw new ArgumentException($"File {file} does not exist");
+        }
+
+        var text = await File.ReadAllLinesAsync(file);
+
+        var raw = string.Join("", text.Where(l => !l.StartsWith("--") && !l.StartsWith("Comment")));
+
+        var keyBytes = Convert.FromBase64String(raw);
+        
+        var pos = 0;
+        
+
+        var type = ReadString(); // should be "ssh-rsa"
+        if (type != "ssh-rsa")
+        {
+            throw new Exception("Expected ssh-rsa, but got '{type}'");
+        }
+        var e = ReadBytes();
+        var n = ReadBytes();
+
+        var jwk = new
+        {
+            e = Base64Url(e),
+            n = Base64Url(n),
+            kty = "RSA",
+            alg = "RS256",
+            use = "sig",
+            kid = Guid.NewGuid().ToString("N")
+        };
+
+        var jwkJson = JsonSerializer.Serialize(jwk, new JsonSerializerOptions { WriteIndented = true });
+        Console.WriteLine(jwkJson);
+        
+        int ReadInt()
+        {
+            int val = (keyBytes[pos] << 24) | (keyBytes[pos + 1] << 16) | (keyBytes[pos + 2] << 8) | keyBytes[pos + 3];
+            pos += 4;
+            return val;
+        }
+        string ReadString()
+        {
+            int len = ReadInt();
+            string s = Encoding.ASCII.GetString(keyBytes, pos, len);
+            pos += len;
+            return s;
+        }
+        byte[] ReadBytes()
+        {
+            int len = ReadInt();
+            byte[] b = new byte[len];
+            Array.Copy(keyBytes, pos, b, 0, len);
+            pos += len;
+            return b;
+        }
+        
+        // Base64url encode
+        string Base64Url(byte[] input)
+        {
+            return Convert.ToBase64String(input)
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+        }
     }
 }
 
